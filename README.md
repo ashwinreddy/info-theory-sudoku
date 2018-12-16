@@ -1,2 +1,2 @@
-# Info Theory Sudoko Project
+# Info Theory Sudoku Project
 
