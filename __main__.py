@@ -16,6 +16,7 @@ class SudokuGrid(object):
     def __init__(self, grid = np.ones((9,9,9), dtype='int8')):
         # (i, j, k): i is the row, j is the column, k is viability (1 if viable, 0 otherwise)
         self.grid = grid
+        self.questions_asked = 0
 
     def take_into_account_new_entry(self, row: int, col: int, entry: int):
         """
@@ -48,6 +49,11 @@ class SudokuGrid(object):
                 if i == row and j == col:
                     continue
                 self.grid[i][j][entry - 1] = 0
+    
+    def ask_question(self, prompt):
+        answer = input(prompt)
+        self.questions_asked += 1
+        return answer
 
     def determine_cell(self, row, col, indices):
         """
@@ -62,7 +68,7 @@ class SudokuGrid(object):
         # When there are only 2 possibilities, ask which one it is, and return the answer
         if len(options) == 2:
             logging.debug("There are only two possibilities, {} and {}".format(indices[0]+1, indices[1]+1))
-            answer = input("Is the value {} ? ".format(options[0]))
+            answer = self.ask_question("Is the value {} ? ".format(options[0]))
             idx = 0 if answer == "yes" else 1
             val = indices[idx] + 1
             # take_into_account_new_entry takes in the value of the entry, not the index, so
@@ -72,13 +78,8 @@ class SudokuGrid(object):
 
         # Otherwise, use simple binary search to determine what the value is in a minimal number of questions
         pivot = round(len(indices) / 2)
-        answer = input("Is the value for the ({}, {}) cell greater than or equal to {} ? ".format(row, col, options[pivot]))
-        if answer == "yes":
-            indices = indices[pivot:]
-        else:
-            indices = indices[:pivot]
-
-        print("Here are the new possibilities ", convert_indices_to_options(indices))
+        answer = self.ask_question("Is the value for the ({}, {}) cell greater than or equal to {} ? ".format(row, col, options[pivot]))
+        indices = indices[pivot:] if answer == "yes" else indices[:pivot]
 
         return self.determine_cell(row, col, indices)
         # strike whichever half was eliminated
@@ -108,12 +109,19 @@ class SudokuGrid(object):
                 massive_str += "|" + "|".join(grouped_strings) + "|\n"
             massive_str += line_separator
             
-            if (idx + 1) % 3 == 0:
+            if idx == 2 or idx == 5:
                 massive_str += line_separator
 
         return massive_str
+    
+    @property
+    def completed(self):
+        for i in range(self.grid.shape[0]):
+            for j in range(self.grid.shape[1]):
+                # if it is completed, then there should only be 1 nonzero value here
+                if np.count_nonzero(self.grid[i][j]) != 1:
+                    return False
  
 sg = SudokuGrid()
-print(sg)
-# print(sg.determine_cell(0, 1, sg.viable_indices(0,1)))
-# # sg.take_into_account_new_entry(2, 2, 1)
+# sg.determine_cell(0, 0, sg.viable_indices(0,0))
+# sg.determine_cell(0, 1, sg.viable_indices(0,1))
