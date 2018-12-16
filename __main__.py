@@ -49,14 +49,6 @@ class SudokuGrid(object):
                     continue
                 self.grid[i][j][entry - 1] = 0
 
-        # print(self.grid[row_subgrid_idx : 3 * (row_subgrid_idx+1)])
-        # self.grid[row_subgrid_idx: 3 * (row_subgrid_idx + 1) + 1][col_subgrid_idx: 3 * (col_subgrid_idx + 1)+1]
-        # logging.debug("{} to {}".format(row_subgrid_idx, 3 * (row_subgrid_idx + 1) ))        
-        # self.grid[row_subgrid_idx: 3 * (row_subgrid_idx + 1) + 1][col][entry - 1] = 0
-        # self.grid[row_subgrid_idx: 3 * (row_subgrid_idx + 1) + 1][col][entry - 1] = 0
-        # self.grid[col_subgrid_idx: 3 * (col_subgrid_idx + 1) + 1][entry - 1] = 0
-        # self.grid[col_subgrid_idx: 3 * (col_subgrid_idx + 1) + 1][entry:][entry - 1] = 0
-
     def determine_cell(self, row, col, indices):
         """
         Uses binary search to determine what (row, col)'s value is, given a list of viable indices
@@ -80,11 +72,11 @@ class SudokuGrid(object):
 
         # Otherwise, use simple binary search to determine what the value is in a minimal number of questions
         pivot = round(len(indices) / 2)
-        answer = input("Is the value for the ({}, {}) cell greater than {} ? ".format(row, col, options[pivot]))
+        answer = input("Is the value for the ({}, {}) cell greater than or equal to {} ? ".format(row, col, options[pivot]))
         if answer == "yes":
-            indices = indices[pivot + 1:]
+            indices = indices[pivot:]
         else:
-            indices = indices[:pivot + 1]
+            indices = indices[:pivot]
 
         print("Here are the new possibilities ", convert_indices_to_options(indices))
 
@@ -105,27 +97,23 @@ class SudokuGrid(object):
         for i in range(self.grid.shape[0]):
             strings.append([pretty_print_indices( self.viable_options(i,j) ).split("\n") for j in range(self.grid.shape[1])])
 
-        massive_str = "-" * 55 + "\n"
+        line_separator = "|" + "-" * 17 + "||" + "-" * 17 + "||" + "-" * 17 + "|\n"
+        massive_str = line_separator
 
-        for row in strings:
+        for idx, row in enumerate(strings):
             for i in range(3):
-                massive_str += "|" + "|".join([ x[i] for x in row]) + "|\n"
-            massive_str += "-" * 55 + "\n"
+                grouped_strings = [ x[i] for x in row]
+                grouped_strings.insert(3, "")
+                grouped_strings.insert(7, "")
+                massive_str += "|" + "|".join(grouped_strings) + "|\n"
+            massive_str += line_separator
+            
+            if idx in [2, 5, 8]:
+                massive_str += line_separator
 
         return massive_str
-
-                
-                
-                
-
-
-                
-
-
+ 
 sg = SudokuGrid()
-# print(sg)
-# print(sg.determine_cell(0, 0, sg.viable_indices(0,0)))
-sg.take_into_account_new_entry(0,0, 5)
 print(sg)
 # print(sg.determine_cell(0, 1, sg.viable_indices(0,1)))
 # # sg.take_into_account_new_entry(2, 2, 1)
