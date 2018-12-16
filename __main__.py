@@ -108,7 +108,7 @@ class SudokuGrid(object):
                 massive_str += "|" + "|".join(grouped_strings) + "|\n"
             massive_str += line_separator
             
-            if idx in [2, 5, 8]:
+            if (idx + 1) % 3 == 0:
                 massive_str += line_separator
 
         return massive_str
