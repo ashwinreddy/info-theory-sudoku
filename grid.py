@@ -9,6 +9,40 @@ def pretty_print_indices(indices):
 def convert_indices_to_options(indices):
     return [idx + 1 for idx in indices]
 
+def find_empty_location(arr,l): 
+    for row in range(9): 
+        for col in range(9): 
+            if(arr[row][col]==0): 
+                l[0]=row 
+                l[1]=col 
+                return True
+    return False
+
+def used_in_row(sudoku, row, num):
+    for i in range(9):
+        if sudoku[row][i] == num:
+            return True
+    return False
+
+def used_in_col(sudoku,col,num): 
+    for i in range(9): 
+        if(sudoku[i][col] == num): 
+            return True
+    return False
+
+
+def used_in_box(sudoku,row,col,num): 
+    for i in range(3): 
+        for j in range(3): 
+            if(sudoku[i+row][j+col] == num): 
+                return True
+    return False 
+
+
+def check_location_is_safe(arr,row,col,num): 
+    return not used_in_row(arr,row,num) and not used_in_col(arr,col,num) and not used_in_box(arr,row - row%3,col - col%3,num) 
+      
+
 # This class will keep track of all the known and unknown cells
 class SudokuGrid(object):
     def __init__(self, interrogator, grid = np.ones((9,9,9), dtype='int8')):
@@ -121,3 +155,43 @@ class SudokuGrid(object):
                 if np.count_nonzero(self.grid[i][j]) != 1:
                     return False
         return True
+    
+    @property
+    def collapsed_grid(self):
+        grid = []
+        for i in range(9):
+            buffer = []
+            for j in range(9):
+                if np.count_nonzero(self.grid[i][j] == 1) > 1:
+                    buffer.append(0)
+                else:
+                    buffer.append( 1 + np.where(self.grid[i][j]==1)[0][0])
+                # if np.count_nonzero(self.grid[i][j] == 1) > 1:
+                #     buffer.append(0)
+                # else:
+                #     buffer.append(np.where(self.grid[i][j] == 1)[0][0])
+            grid.append(buffer)
+        return np.array(grid)
+
+    def solve(self, arr):
+        print(arr)
+        l=[0,0] 
+        
+        if(not find_empty_location(arr,l)): 
+            return True
+        
+        row=l[0] 
+        col=l[1] 
+        
+        for num in range(1,10): 
+            
+            if(check_location_is_safe(arr,row,col,num)): 
+                
+                arr[row][col]=num 
+    
+                if(self.solve(arr)): 
+                    return True
+    
+                arr[row][col] = 0
+                
+        return False 
