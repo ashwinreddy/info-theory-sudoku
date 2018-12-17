@@ -1,39 +1,13 @@
 import numpy as np
 import logging
 
+
 def pretty_print_indices(indices): 
     return """{} {} {}\n{} {} {}\n{} {} {}
     """.format(*[i if i in indices else " " for i in range(1,10)])
 
 def convert_indices_to_options(indices):
     return [idx + 1 for idx in indices]
-
-
-operator_to_human_readable = {
-    "==": "equal to",
-    ">=": "greater than or equal to"
-}
-
-class Interrogator(object):
-    def __init__(self, ask_user_mode = True):
-        self.ask_user_mode = ask_user_mode
-        self.questions_asked = 0
-    
-    def set_grid(self, grid):
-        self.grid = grid
-    
-    def ask(self, question):
-        human_readable_question = "Is the value in {}th cell {} {} ? ".format(question[0], operator_to_human_readable[question[1]], question[2])
-
-        logging.debug(human_readable_question)
-
-        self.questions_asked += 1
-        if self.ask_user_mode:
-            user_answer = input(human_readable_question)
-            return user_answer == "yes"
-        else:
-            question = "{} {} {}".format(self.grid[question[0]], question[1], question[2])
-            return eval(question)
 
 # This class will keep track of all the known and unknown cells
 class SudokuGrid(object):
