@@ -35,19 +35,22 @@ for i in range(9):
         if (i,j) not in order_of_questioning:
             order_of_questioning.append((i,j))
 
-order_of_questioning = order_of_questioning
+order_of_questioning = order_of_questioning[::-1]
 
+print(sg)
 i = 0
 while not sg.completed:
     # row, col = np.unravel_index(order_of_questioning[i], grid.shape)
     row, col = order_of_questioning[i]
     sg.determine_cell(row, col, sg.viable_indices(row, col))
     # flat_idx += 1
+    print(sg)
     i += 1
+    # input("? ")
     # if i > 40:
     
     
     #         break
-
-# print(sg.collapsed_grid)
+# print(sg.gri)
+print(sg)
 print(interrogator.questions_asked)

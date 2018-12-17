@@ -1,0 +1,30 @@
+- A way of dealing with the lies
+- Knowing when to stop asking questions
+- Proving that whatever we come up with approaches optimality
+
+
+
+Knowing when to stop asking questions:
+
+Take all the cells that have more than 1 viable possibility. One combination must be a valid solution. Idea is that you start check if each of these combinations
+yields a valid solution...if we find more than 1 combination that is a valid solution, we keep asking questions to determine more cells' values.
+
+When you pick the first cell's values, that may eliminate other possibilities from the remaining cells. Then it only makes sense to pick from the new viable
+possibilities (given that you've temporarily picked a value for the first one).
+
+
+Algorithm: Recursive algorithm
+
+#Returns False if more than 1 solution exists
+#Otherwise, returns the unique valid solution for the grid
+
+function count_solutions(tmp_grid)
+
+1. Find the first undetermined cell. Record its (row, col)
+2. Pick the smallest viable value for that cell.
+3. Eliminate that value from its undetermined neighbors.
+4. Call count_solutions(tmp_grid)
+
+If we find that the value picked from step 2 for this tmp grid is not working,
+
+end
