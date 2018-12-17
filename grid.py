@@ -147,6 +147,8 @@ class SudokuGrid(object):
 
         return massive_str
 
+    def 
+
     @property
     def completed(self):
         for i in range(self.grid.shape[0]):

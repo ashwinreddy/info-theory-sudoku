@@ -19,14 +19,6 @@ interrogator = Interrogator(config['ask_user_mode'])
 interrogator.set_grid(test_grid)
 sg = SudokuGrid(interrogator)
 
-def spiral_cw(A):
-    A = np.array(A)
-    out = []
-    while(A.size):
-        out.append(A[0])        # take first row
-        A = A[1:].T[::-1]       # cut off first row and rotate counterclockwise
-    return np.concatenate(out)
-
 # order_of_questioning = list(range(81))
 order_of_questioning = []
 
@@ -40,17 +32,10 @@ order_of_questioning = order_of_questioning[::-1]
 print(sg)
 i = 0
 while not sg.completed:
-    # row, col = np.unravel_index(order_of_questioning[i], grid.shape)
     row, col = order_of_questioning[i]
     sg.determine_cell(row, col, sg.viable_indices(row, col))
-    # flat_idx += 1
     print(sg)
     i += 1
-    # input("? ")
-    # if i > 40:
-    
-    
-    #         break
-# print(sg.gri)
+
 print(sg)
 print(interrogator.questions_asked)

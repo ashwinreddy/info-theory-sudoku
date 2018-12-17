@@ -42,5 +42,7 @@ We ask this question and then we ask them if they lied on this question
 1) Yes, yes -> we're fine, and we keep checkpoitning in the future (the lie could come up then)
 2) Yes, no -> we've made some mistake between the last checkpoint and now...we return to the last checkpoint and start
 the Huffman process again to reach the next checkpoint (and we stop checkpointing in the future bnecause we've caught the lie)
+3) No, yes -> we're fine, and we keep checkpointing in the future (the lie could come up then)
+4) no, no -> we've made some mistake between the last checkpoint and now...we return to the last checkpoint and start
 
 end
