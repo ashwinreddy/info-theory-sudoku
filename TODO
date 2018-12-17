@@ -27,4 +27,20 @@ function count_solutions(tmp_grid)
 
 If we find that the value picked from step 2 for this tmp grid is not working,
 
+
+
+
+
+Checkpointing:
+
+We pick a number of questions after which we checkpoint (checkpoint frequency)
+Every time this frequency is reached, we show the user the collapsed grid (containing the cells that have determined values)
+We ask the user whether that collapsed grid matches with theirs or not
+We ask this question and then we ask them if they lied on this question
+
+
+1) Yes, yes -> we're fine, and we keep checkpoitning in the future (the lie could come up then)
+2) Yes, no -> we've made some mistake between the last checkpoint and now...we return to the last checkpoint and start
+the Huffman process again to reach the next checkpoint (and we stop checkpointing in the future bnecause we've caught the lie)
+
 end
