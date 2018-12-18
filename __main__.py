@@ -2,7 +2,7 @@
 import numpy as np
 
 from grid import SudokuGrid, solve
-from interrogator import Interrogator
+from questioner import Questioner
 
 import logging
 import toml
@@ -18,9 +18,9 @@ with open('config.toml') as f:
     logging.debug(config)
 
 test_grid = np.loadtxt("test_grids/2.txt", delimiter=' ', dtype='int8')
-interrogator = Interrogator(config['ask_user_mode'])
-interrogator.set_grid(test_grid)
-sg = SudokuGrid(interrogator)
+questioner = Questioner(config['ask_user_mode'])
+questioner.set_grid(test_grid)
+sg = SudokuGrid(questioner)
 
 
 solve(sg, list(range(81)))

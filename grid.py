@@ -13,7 +13,7 @@ def solve(sg, cells):
     i = 0
     while not sg.completed:
         row, col = np.unravel_index(cells[i], (9,9))
-        sg.determine_cell(row, col, sg.viable_indices(row, col))
+        sg.determine_cell((row, col), sg.viable_indices((row, col)))
         i += 1
 
 # This class will keep track of all the known and unknown cells
@@ -80,11 +80,13 @@ class SudokuGrid(object):
         return entry
 
 
-    def determine_cell(self, row, col, indices):
+    def determine_cell(self, coordinate, indices):
         """
         Uses binary search to determine what (row, col)'s value is, given a list of viable indices
         """
         options = convert_indices_to_options(indices)
+        row = coordinate[0]
+        col = coordinate[1]
 
         if len(options) == 0:
             logging.critical("No options for the {} cell".format((row, col)))
@@ -108,14 +110,14 @@ class SudokuGrid(object):
         logging.debug(answer)
         indices = indices[pivot:] if answer == True else indices[:pivot]
 
-        return self.determine_cell(row, col, indices)
+        return self.determine_cell((row, col), indices)
         # strike whichever half was eliminated
         # call itself again
 
 
-    def viable_indices(self, row, col):
+    def viable_indices(self, coordinate):
         # any entry with 1 is a viable index
-        return np.where(self.grid[row][col] == 1)[0]
+        return np.where(self.grid[coordinate] == 1)[0]
 
     def viable_options(self, row, col):
         return convert_indices_to_options(self.viable_indices(row, col))
