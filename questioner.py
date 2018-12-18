@@ -16,10 +16,20 @@ class Questioner(object):
     def ask(self, question):
         human_readable_question = "Is the value in {}th cell {} {} ? ".format(question[0], operator_to_human_readable[question[1]], question[2])
 
-        self.questions_asked += 1
+        
         if self.ask_user_mode:
             user_answer = input(human_readable_question)
-            return user_answer == "yes"
+            answer = user_answer == "yes"
         else:
             question = "{} {} {}".format(self.grid[question[0]], question[1], question[2])
-            return eval(question)
+            answer = eval(question)
+        self.questions_asked += 1
+        return answer
+    
+    def is_rewinding_required(self, collapsed_grid):
+        human_readable_question = "Does your grid look like this?\n {} \n ? ".format(collapsed_grid)
+        rewindingRequired = input(human_readable_question) == "yes"
+        checkForLie = input("Did you just lie on this last question? ") == "yes"
+        self.questions_asked += 2
+        rewindingRequired = not rewindingRequired ^ checkForLie
+        return rewindingRequired

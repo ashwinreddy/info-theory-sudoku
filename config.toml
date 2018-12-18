@@ -1,5 +1,5 @@
 ask_user_mode = false
-logging_level = "critical"
+logging_level = "info"
 assume_lying = true
-checkpoint_frequency = 7
+checkpoint_frequency = 20
 interactive_mode = false

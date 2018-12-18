@@ -10,6 +10,7 @@ import toml
 logging_levels = {
     "debug": logging.DEBUG,
     "critical": logging.CRITICAL,
+    "info": logging.INFO,
 }
 
 with open('config.toml') as f:

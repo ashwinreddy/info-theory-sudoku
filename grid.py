@@ -11,10 +11,21 @@ def indices_to_options(indices):
 
 def solve(sg, cells, assume_lying, checkpoint_frequency, interactive_mode = False):
     i = 0
+
+    # If we're assuming that the person can lie, then the lie has not yet been caught.
+    # If we assume that they won't ever lie, then this is effectively as if we already caught the lie.
+    has_lie_been_caught = False if assume_lying else True
+    
     while not sg.completed:
-        if sg.questioner.questions_asked > 0 and sg.questioner.questions_asked % checkpoint_frequency == 0 and assume_lying:
+        # Three conditions for checkpointing: 
+        # 1. A question needs to have been asked
+        # 2. It needs to be after the appropriate number of questions have passed
+        # 3. The lie hasn't been caught yet
+        if sg.questioner.questions_asked > 0 and sg.questioner.questions_asked % checkpoint_frequency == 0 and not has_lie_been_caught:
             logging.debug("Time for a checkpoint!")
-            sg.checkpoint()
+            has_lie_been_caught = sg.checkpoint()
+            if has_lie_been_caught:
+                i -= 7
 
         coordinate = np.unravel_index(cells[i], (9,9))
         sg.determine_cell(coordinate, sg.viable_indices(coordinate))
@@ -22,6 +33,7 @@ def solve(sg, cells, assume_lying, checkpoint_frequency, interactive_mode = Fals
         if interactive_mode:
             input("? ")
     print(sg)
+    print(sg.questioner.questions_asked)
 
 # This class will keep track of all the known and unknown cells
 class SudokuGrid(object):
@@ -30,10 +42,19 @@ class SudokuGrid(object):
         # (i, j, k): i is the row, j is the column, k is viability (1 if viable, 0 otherwise)
         self.grid = np.ones((9,9,9), dtype='int8')
         self.questioner = questioner
+        self.checkpointed_copy_of_grid = np.copy(self.grid)
     
     def checkpoint(self):
         print("Need to make sure the user's grid agrees with my grid so far")
-        print(self.collapsed_grid)
+        rewinding_required = self.questioner.is_rewinding_required(self.collapsed_grid)
+        if rewinding_required:
+            print("All the answers from the last checkpoint to here are suspect. Stop checkpointing after this")
+            self.grid = np.copy(self.checkpointed_copy_of_grid)
+            return True
+        else:
+            logging.info("There haven't been any lies since the last checkpoint. Recording this grid so far as valid, and moving on with the assumption that a lie could show up later.")
+            self.checkpointed_copy_of_grid = np.copy(self.grid)
+            return False
 
     def __getitem__(self, coordinate):
         return self.grid[coordinate]
@@ -56,7 +77,7 @@ class SudokuGrid(object):
         # sg.assign_cell(cell[0], cell[1], viable_solution)
         # return sg.count_solutions()
 
-    def make_value_for_cell_impossible(self, coordinate, entry):
+    def eliminate_option_for_cell(self, coordinate, entry):
         self[coordinate][entry - 1] = 0    
     
     def assign_cell(self, coordinate, entry):
@@ -72,14 +93,14 @@ class SudokuGrid(object):
         self[coordinate][entry:] = 0
 
         for j in range(0, 9):
-            self.make_value_for_cell_impossible((row, j), entry)
+            self.eliminate_option_for_cell((row, j), entry)
 
         for i in range(0, 9):
-            self.make_value_for_cell_impossible((i, col), entry)
+            self.eliminate_option_for_cell((i, col), entry)
 
         for i in range(row - (row % 3), row + 3-(row % 3) ):
             for j in range(col - (col % 3), col + 3-(col % 3) ):
-                self.make_value_for_cell_impossible((i,j), entry)
+                self.eliminate_option_for_cell((i,j), entry)
 
         self[coordinate][entry - 1] = 1
 
@@ -146,19 +167,7 @@ class SudokuGrid(object):
 
     @property
     def collapsed_grid(self):
-        grid = []
-        for i in range(9):
-            buffer = []
-            for j in range(9):
-                if np.count_nonzero(self[i][j] == 1) > 1:
-                    buffer.append(0)
-                else:
-                    buffer.append( 1 + np.where(self[i][j]==1)[0][0])
-                # if np.count_nonzero(self.grid[i][j] == 1) > 1:
-                #     buffer.append(0)
-                # else:
-                #     buffer.append(np.where(self.grid[i][j] == 1)[0][0])
-            grid.append(buffer)
+        grid = [[0 if np.count_nonzero(self[i][j] == 1) > 1 else 1 + np.where(self[i][j] == 1)[0][0] for j in range(9) ] for i in range(9)]
         return np.array(grid)
 
     # def count_solutions(self):
