@@ -27,14 +27,12 @@ for i in range(9):
         if (i,j) not in order_of_questioning:
             order_of_questioning.append((i,j))
 
-order_of_questioning = order_of_questioning[::-1]
-
 print(sg)
 i = 0
 while not sg.completed:
     row, col = order_of_questioning[i]
     sg.determine_cell(row, col, sg.viable_indices(row, col))
-    print(sg)
+    print("Count solns", sg.count_solutions())
     i += 1
 
 print(sg)

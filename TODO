@@ -25,11 +25,9 @@ function count_solutions(tmp_grid)
 3. Eliminate that value from its undetermined neighbors.
 4. Call count_solutions(tmp_grid)
 
+end
+
 If we find that the value picked from step 2 for this tmp grid is not working,
-
-
-
-
 
 Checkpointing:
 
@@ -44,5 +42,3 @@ We ask this question and then we ask them if they lied on this question
 the Huffman process again to reach the next checkpoint (and we stop checkpointing in the future bnecause we've caught the lie)
 3) No, yes -> we're fine, and we keep checkpointing in the future (the lie could come up then)
 4) no, no -> we've made some mistake between the last checkpoint and now...we return to the last checkpoint and start
-
-end

@@ -9,15 +9,6 @@ def pretty_print_indices(indices):
 def convert_indices_to_options(indices):
     return [idx + 1 for idx in indices]
 
-def find_empty_location(arr,l):
-    for row in range(9):
-        for col in range(9):
-            if(arr[row][col]==0):
-                l[0]=row
-                l[1]=col
-                return True
-    return False
-
 def used_in_row(sudoku, row, num):
     for i in range(9):
         if sudoku[row][i] == num:
@@ -50,8 +41,26 @@ class SudokuGrid(object):
         # (i, j, k): i is the row, j is the column, k is viability (1 if viable, 0 otherwise)
         self.grid = grid
         self.interrogator = interrogator
-
-    def take_into_account_new_entry(self, row: int, col: int, entry: int):
+    
+    def find_empty_location(self):
+        array = np.sum(self.grid,axis=2) > 1
+        i = 0
+        for elem in np.nditer(array):
+            if elem == True:
+                return np.unravel_index(i, (9,9))
+            i += 1
+        return False
+    
+    def count_solutions(self):
+        cell = self.find_empty_location()
+        viable_solution = np.argmax(self.grid[cell] == 1)
+        grid_array_copy = np.copy(self.grid)
+        sg = SudokuGrid(grid_array_copy)
+        sg.assign_cell(cell, viable_solution)
+        return sg.count_solutions()
+        
+    
+    def assign_cell(self, row: int, col: int, entry: int):
         """
         Changes the grid's values so that (row, col)'s only viable option is entry.
         Then strikes the value of entry from all neighbors (same row, same column, same 3x3 grid)
@@ -103,9 +112,9 @@ class SudokuGrid(object):
             answer = self.interrogator.ask( ((row, col), "==", options[0] ))
             logging.debug(answer)
             idx = 0 if answer == True else 1
-            return self.take_into_account_new_entry(row, col, options[idx])
+            return self.assign_cell(row, col, options[idx])
         elif len(options) == 1:
-            return self.take_into_account_new_entry(row, col, options[0])
+            return self.assign_cell(row, col, options[0])
 
         # Otherwise, use simple binary search to determine what the value is in a minimal number of questions
         pivot = round(len(indices) / 2)
@@ -146,8 +155,6 @@ class SudokuGrid(object):
                 massive_str += line_separator
 
         return massive_str
-
-    def 
 
     @property
     def completed(self):
@@ -197,3 +204,5 @@ class SudokuGrid(object):
                 arr[row][col] = 0
 
         return False
+
+    # def count_solutions(self):
