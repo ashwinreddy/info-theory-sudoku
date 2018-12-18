@@ -5,8 +5,8 @@ operator_to_human_readable = {
     ">=": "greater than or equal to"
 }
 
-class Interrogator(object):
-    def __init__(self, ask_user_mode = True):
+class Questioner(object):
+    def __init__(self, ask_user_mode):
         self.ask_user_mode = ask_user_mode
         self.questions_asked = 0
     
@@ -15,8 +15,6 @@ class Interrogator(object):
     
     def ask(self, question):
         human_readable_question = "Is the value in {}th cell {} {} ? ".format(question[0], operator_to_human_readable[question[1]], question[2])
-
-        logging.debug(human_readable_question)
 
         self.questions_asked += 1
         if self.ask_user_mode:

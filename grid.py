@@ -9,30 +9,12 @@ def pretty_print_indices(indices):
 def convert_indices_to_options(indices):
     return [idx + 1 for idx in indices]
 
-def used_in_row(sudoku, row, num):
-    for i in range(9):
-        if sudoku[row][i] == num:
-            return True
-    return False
-
-def used_in_col(sudoku,col,num):
-    for i in range(9):
-        if(sudoku[i][col] == num):
-            return True
-    return False
-
-
-def used_in_box(sudoku,row,col,num):
-    for i in range(3):
-        for j in range(3):
-            if(sudoku[i+row][j+col] == num):
-                return True
-    return False
-
-
-def check_location_is_safe(arr,row,col,num):
-    return not used_in_row(arr,row,num) and not used_in_col(arr,col,num) and not used_in_box(arr,row - row%3,col - col%3,num)
-
+def solve(sg, cells):
+    i = 0
+    while not sg.completed:
+        row, col = np.unravel_index(cells[i], (9,9))
+        sg.determine_cell(row, col, sg.viable_indices(row, col))
+        i += 1
 
 # This class will keep track of all the known and unknown cells
 class SudokuGrid(object):
@@ -61,12 +43,14 @@ class SudokuGrid(object):
         # return sg.count_solutions()
         
     
-    def assign_cell(self, row: int, col: int, entry: int):
+    def assign_cell(self, coordinate, entry):
         """
         Changes the grid's values so that (row, col)'s only viable option is entry.
         Then strikes the value of entry from all neighbors (same row, same column, same 3x3 grid)
         """
-        logging.debug("Setting ({}, {}) to {}".format(row, col, entry))
+
+        row = coordinate[0]
+        col = coordinate[1]
 
         self.grid[row][col][:entry-1] = 0
         self.grid[row][col][entry:] = 0
@@ -113,9 +97,9 @@ class SudokuGrid(object):
             answer = self.interrogator.ask( ((row, col), "==", options[0] ))
             logging.debug(answer)
             idx = 0 if answer == True else 1
-            return self.assign_cell(row, col, options[idx])
+            return self.assign_cell((row, col), options[idx])
         elif len(options) == 1:
-            return self.assign_cell(row, col, options[0])
+            return self.assign_cell((row, col), options[0])
 
         # Otherwise, use simple binary search to determine what the value is in a minimal number of questions
         pivot = round(len(indices) / 2)
