@@ -14,6 +14,7 @@ def solve(sg, cells, assume_lying, checkpoint_frequency, interactive_mode = Fals
     while not sg.completed:
         if sg.questioner.questions_asked > 0 and sg.questioner.questions_asked % checkpoint_frequency == 0 and assume_lying:
             logging.debug("Time for a checkpoint!")
+            sg.checkpoint()
 
         coordinate = np.unravel_index(cells[i], (9,9))
         sg.determine_cell(coordinate, sg.viable_indices(coordinate))
@@ -29,6 +30,13 @@ class SudokuGrid(object):
         # (i, j, k): i is the row, j is the column, k is viability (1 if viable, 0 otherwise)
         self.grid = np.ones((9,9,9), dtype='int8')
         self.questioner = questioner
+    
+    def checkpoint(self):
+        print("Need to make sure the user's grid agrees with my grid so far")
+        print(self.collapsed_grid)
+
+    def __getitem__(self, coordinate):
+        return self.grid[coordinate]
     
     def find_empty_location(self):
         array = np.sum(self.grid,axis=2) > 1
@@ -47,7 +55,9 @@ class SudokuGrid(object):
         # sg = SudokuGrid(grid_array_copy)
         # sg.assign_cell(cell[0], cell[1], viable_solution)
         # return sg.count_solutions()
-        
+
+    def make_value_for_cell_impossible(self, coordinate, entry):
+        self[coordinate][entry - 1] = 0    
     
     def assign_cell(self, coordinate, entry):
         """
@@ -58,30 +68,20 @@ class SudokuGrid(object):
         row = coordinate[0]
         col = coordinate[1]
 
-        self.grid[coordinate][:entry-1] = 0
-        self.grid[coordinate][entry:] = 0
+        self[coordinate][:entry-1] = 0
+        self[coordinate][entry:] = 0
 
-        # TODO: use cleaner numpy indexing
         for j in range(0, 9):
-            if j == col:
-                continue
-            # print(self.grid[row][j])
-            self.grid[row][j][entry - 1] = 0
+            self.make_value_for_cell_impossible((row, j), entry)
 
-        # TODO: use cleaner numpy indexing
         for i in range(0, 9):
-            if i == row:
-                continue
-            # print(self.grid[i][col])
-            self.grid[i][col][entry - 1] = 0
-
-
+            self.make_value_for_cell_impossible((i, col), entry)
 
         for i in range(row - (row % 3), row + 3-(row % 3) ):
             for j in range(col - (col % 3), col + 3-(col % 3) ):
-                if i == row and j == col:
-                    continue
-                self.grid[i][j][entry - 1] = 0
+                self.make_value_for_cell_impossible((i,j), entry)
+
+        self[coordinate][entry - 1] = 1
 
         return entry
 
@@ -98,10 +98,9 @@ class SudokuGrid(object):
 
         # When there are only 2 possibilities, ask which one it is, and return the answer
         if len(options) == 2:
-            answer = self.questioner.ask( (coordinate, "==", options[0] ))
+            answer = self.questioner.ask( (coordinate, "==", options[1] ))
             logging.debug(answer)
-            idx = 0 if answer == True else 1
-            return self.assign_cell(coordinate, options[idx])
+            return self.assign_cell(coordinate, options[bool(answer)])
         elif len(options) == 1:
             return self.assign_cell(coordinate, options[0])
 
@@ -141,7 +140,7 @@ class SudokuGrid(object):
         for i in range(self.grid.shape[0]):
             for j in range(self.grid.shape[1]):
                 # if it is completed, then there should only be 1 nonzero value here
-                if np.count_nonzero(self.grid[i][j]) != 1:
+                if np.count_nonzero(self[i][j]) != 1:
                     return False
         return True
 
@@ -151,38 +150,15 @@ class SudokuGrid(object):
         for i in range(9):
             buffer = []
             for j in range(9):
-                if np.count_nonzero(self.grid[i][j] == 1) > 1:
+                if np.count_nonzero(self[i][j] == 1) > 1:
                     buffer.append(0)
                 else:
-                    buffer.append( 1 + np.where(self.grid[i][j]==1)[0][0])
+                    buffer.append( 1 + np.where(self[i][j]==1)[0][0])
                 # if np.count_nonzero(self.grid[i][j] == 1) > 1:
                 #     buffer.append(0)
                 # else:
                 #     buffer.append(np.where(self.grid[i][j] == 1)[0][0])
             grid.append(buffer)
         return np.array(grid)
-
-    def solve(self, arr):
-        print(arr)
-        l=[0,0]
-
-        if(not find_empty_location(arr,l)):
-            return True
-
-        row=l[0]
-        col=l[1]
-
-        for num in range(1,10):
-
-            if(check_location_is_safe(arr,row,col,num)):
-
-                arr[row][col]=num
-
-                if(self.solve(arr)):
-                    return True
-
-                arr[row][col] = 0
-
-        return False
 
     # def count_solutions(self):
