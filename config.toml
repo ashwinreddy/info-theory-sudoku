@@ -1,2 +1,2 @@
 ask_user_mode = false
-logging_level = "critical"
+logging_level = "debug"

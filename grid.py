@@ -6,15 +6,16 @@ def pretty_print_indices(indices):
     return """{} {} {}\n{} {} {}\n{} {} {}
     """.format(*[i if i in indices else " " for i in range(1,10)])
 
-def convert_indices_to_options(indices):
+def indices_to_options(indices):
     return [idx + 1 for idx in indices]
 
 def solve(sg, cells):
     i = 0
     while not sg.completed:
-        row, col = np.unravel_index(cells[i], (9,9))
-        sg.determine_cell((row, col), sg.viable_indices((row, col)))
+        coordinate = np.unravel_index(cells[i], (9,9))
+        sg.determine_cell(coordinate, sg.viable_indices(coordinate))
         i += 1
+    print(sg)
 
 # This class will keep track of all the known and unknown cells
 class SudokuGrid(object):
@@ -52,8 +53,8 @@ class SudokuGrid(object):
         row = coordinate[0]
         col = coordinate[1]
 
-        self.grid[row][col][:entry-1] = 0
-        self.grid[row][col][entry:] = 0
+        self.grid[coordinate][:entry-1] = 0
+        self.grid[coordinate][entry:] = 0
 
         # TODO: use cleaner numpy indexing
         for j in range(0, 9):
@@ -84,33 +85,33 @@ class SudokuGrid(object):
         """
         Uses binary search to determine what (row, col)'s value is, given a list of viable indices
         """
-        options = convert_indices_to_options(indices)
+        options = indices_to_options(indices)
         row = coordinate[0]
         col = coordinate[1]
 
         if len(options) == 0:
-            logging.critical("No options for the {} cell".format((row, col)))
+            logging.critical("No options for the {} cell".format(coordinate))
 
-        logging.debug("Determining the value of ({}, {}) with possibilities {}".format(row, col, options))
+        logging.debug("Determining the value of {} with possibilities {}".format(coordinate, options))
 
         # When there are only 2 possibilities, ask which one it is, and return the answer
         if len(options) == 2:
             # answer = self.interrogator.ask("Is the value {} ? ".format(options[0]))
-            answer = self.interrogator.ask( ((row, col), "==", options[0] ))
+            answer = self.interrogator.ask( (coordinate, "==", options[0] ))
             logging.debug(answer)
             idx = 0 if answer == True else 1
-            return self.assign_cell((row, col), options[idx])
+            return self.assign_cell(coordinate, options[idx])
         elif len(options) == 1:
-            return self.assign_cell((row, col), options[0])
+            return self.assign_cell(coordinate, options[0])
 
         # Otherwise, use simple binary search to determine what the value is in a minimal number of questions
         pivot = round(len(indices) / 2)
         # answer = self.interrogator.ask("Is the value for the ({}, {}) cell greater than or equal to {} ? ".format(row, col, options[pivot]))
-        answer = self.interrogator.ask(( (row, col), ">=", options[pivot]))
+        answer = self.interrogator.ask(( coordinate, ">=", options[pivot]))
         logging.debug(answer)
         indices = indices[pivot:] if answer == True else indices[:pivot]
 
-        return self.determine_cell((row, col), indices)
+        return self.determine_cell(coordinate, indices)
         # strike whichever half was eliminated
         # call itself again
 
@@ -118,14 +119,11 @@ class SudokuGrid(object):
     def viable_indices(self, coordinate):
         # any entry with 1 is a viable index
         return np.where(self.grid[coordinate] == 1)[0]
-
-    def viable_options(self, row, col):
-        return convert_indices_to_options(self.viable_indices(row, col))
-
+        
     def __repr__(self):
         strings = []
         for i in range(self.grid.shape[0]):
-            strings.append([pretty_print_indices( self.viable_options(i,j) ).split("\n") for j in range(self.grid.shape[1])])
+            strings.append([pretty_print_indices( indices_to_options(self.viable_indices((i,j))) ).split("\n") for j in range(self.grid.shape[1])])
 
         line_separator = "|" + "-" * 17 + "||" + "-" * 17 + "||" + "-" * 17 + "|\n"
         massive_str = line_separator
