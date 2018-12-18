@@ -52,12 +52,13 @@ class SudokuGrid(object):
         return False
     
     def count_solutions(self):
-        cell = self.find_empty_location()
-        viable_solution = np.argmax(self.grid[cell] == 1)
-        grid_array_copy = np.copy(self.grid)
-        sg = SudokuGrid(grid_array_copy)
-        sg.assign_cell(cell, viable_solution)
-        return sg.count_solutions()
+        pass
+        # cell = self.find_empty_location()
+        # viable_solution = np.argmax(self.grid[cell] == 1)
+        # grid_array_copy = np.copy(self.grid)
+        # sg = SudokuGrid(grid_array_copy)
+        # sg.assign_cell(cell[0], cell[1], viable_solution)
+        # return sg.count_solutions()
         
     
     def assign_cell(self, row: int, col: int, entry: int):
