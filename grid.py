@@ -18,9 +18,9 @@ def solve(sg, cells, assume_lying, checkpoint_frequency, interactive_mode = Fals
         # 3. The lie hasn't been caught yet
         if sg.questioner.questions_asked > 0 and sg.num_cells_determined % checkpoint_frequency == 0 and not has_lie_been_caught:
             logging.info("Time for a checkpoint!")
-            has_lie_been_caught = sg.checkpoint()
+            has_lie_been_caught = sg.checkpoint(checkpoint_frequency)
             if has_lie_been_caught:
-                i -= 7
+                i -= checkpoint_frequency
 
         coordinate = np.unravel_index(cells[i], (9,9))
         sg.determine_cell(coordinate, sg.viable_indices(coordinate))
@@ -38,19 +38,23 @@ class SudokuGrid(object):
         self.grid = np.ones((9,9,9), dtype='int8')
         self.questioner = questioner
         self.num_cells_determined = 0
-        self.checkpointed_copy_of_grid = np.copy(self.grid)
+        self.ckpt_copy = self
     
-    def checkpoint(self):
+    def rewind_to_checkpoint(self):
+        self = self.ckpt_copy
+    
+    def checkpoint(self, checkpoint_frequency):
         logging.info("Will check if the user's grid agrees with my grid so far")
         rewinding_required = self.questioner.is_rewinding_required(self.collapsed_grid)
         if rewinding_required:
             logging.info("All the answers from the last checkpoint to here are suspect. Stop checkpointing after this")
-            self.grid = np.copy(self.checkpointed_copy_of_grid)
-            self.num_cells_determined -= 7
+            # self.grid = np.copy(self.ckpt_copy)
+            self.rewind_to_checkpoint()
+            self.num_cells_determined -= checkpoint_frequency
             return True
         else:
             logging.info("There haven't been any lies since the last checkpoint. Recording this grid so far as valid, and moving on with the assumption that a lie could show up later.")
-            self.checkpointed_copy_of_grid = np.copy(self.grid)
+            self.ckpt_copy = self
             return False
 
     def __getitem__(self, coordinate):
@@ -113,7 +117,7 @@ class SudokuGrid(object):
         logging.debug("Determining the value of {} with possibilities {}".format(coordinate, options))
 
         if len(options) == 0:
-            logging.critical("No options for the {} cell".format(coordinate))
+            self.rewind_to_checkpoint()
 
         # When there are only 2 possibilities, ask which one it is, and return the answer
         if len(options) == 2:

@@ -29,15 +29,16 @@ class Questioner(object):
     
     def ask(self, question):
         human_readable_question = "Is the value in {}th cell {} {} ? ".format(question[0], operator_to_human_readable[question[1]], question[2])
+        logging.debug(human_readable_question)
 
         answer = self._ask_human_cell_determining_question(human_readable_question) if self.ask_user_cell_determining_questions else self._ask_computer_cell_determining_question(question)
         
         self.questions_asked += 1
-        return answer
+        return self._answer_question_as_computer(answer)[0]
     
     def _answer_question_as_computer(self, true_response):
-        if self.can_lie and not self.has_lied_yet and random.random() > 0.6:
-            logging.warning("Computer is not telling the truth.")
+        if self.can_lie and not self.has_lied_yet and random.random() > 0.7:
+            logging.warning("Computer is going to lie on this question")
             self.has_lied_yet = True
             return (not true_response, False)
         else:
@@ -53,8 +54,6 @@ class Questioner(object):
                     if collapsed_grid[i][j] != self.grid[i][j]:
                         rewindingRequired = True
 
-        # rewindingRequired, didLieOnCheckpointQuestion = self._answer_question_as_computer(rewindingRequired)
-                
         return rewindingRequired, didLieOnCheckpointQuestion
     
     def is_rewinding_required(self, collapsed_grid):

@@ -2,7 +2,7 @@ ask_user_cell_determining_questions = false
 ask_user_checkpointing_questions = false
 
 
-logging_level = "info"
+logging_level = "debug"
 assume_lying = true
 checkpoint_frequency = 20
 step_mode = false
