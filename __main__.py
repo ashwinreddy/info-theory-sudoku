@@ -23,4 +23,4 @@ questioner.set_grid(test_grid)
 sg = SudokuGrid(questioner)
 
 
-solve(sg, list(range(81)))
+solve(sg, np.arange(81), config['assume_lying'], config['checkpoint_frequency'], config['interactive_mode'])

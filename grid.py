@@ -9,21 +9,26 @@ def pretty_print_indices(indices):
 def indices_to_options(indices):
     return [idx + 1 for idx in indices]
 
-def solve(sg, cells):
+def solve(sg, cells, assume_lying, checkpoint_frequency, interactive_mode = False):
     i = 0
     while not sg.completed:
+        if sg.questioner.questions_asked > 0 and sg.questioner.questions_asked % checkpoint_frequency == 0 and assume_lying:
+            logging.debug("Time for a checkpoint!")
+
         coordinate = np.unravel_index(cells[i], (9,9))
         sg.determine_cell(coordinate, sg.viable_indices(coordinate))
         i += 1
+        if interactive_mode:
+            input("? ")
     print(sg)
 
 # This class will keep track of all the known and unknown cells
 class SudokuGrid(object):
-    def __init__(self, interrogator, grid = np.ones((9,9,9), dtype='int8')):
+    def __init__(self, questioner):
         logging.debug("Instantiating SudokuGrid")
         # (i, j, k): i is the row, j is the column, k is viability (1 if viable, 0 otherwise)
-        self.grid = grid
-        self.interrogator = interrogator
+        self.grid = np.ones((9,9,9), dtype='int8')
+        self.questioner = questioner
     
     def find_empty_location(self):
         array = np.sum(self.grid,axis=2) > 1
@@ -86,18 +91,14 @@ class SudokuGrid(object):
         Uses binary search to determine what (row, col)'s value is, given a list of viable indices
         """
         options = indices_to_options(indices)
-        row = coordinate[0]
-        col = coordinate[1]
+        logging.debug("Determining the value of {} with possibilities {}".format(coordinate, options))
 
         if len(options) == 0:
             logging.critical("No options for the {} cell".format(coordinate))
 
-        logging.debug("Determining the value of {} with possibilities {}".format(coordinate, options))
-
         # When there are only 2 possibilities, ask which one it is, and return the answer
         if len(options) == 2:
-            # answer = self.interrogator.ask("Is the value {} ? ".format(options[0]))
-            answer = self.interrogator.ask( (coordinate, "==", options[0] ))
+            answer = self.questioner.ask( (coordinate, "==", options[0] ))
             logging.debug(answer)
             idx = 0 if answer == True else 1
             return self.assign_cell(coordinate, options[idx])
@@ -106,26 +107,23 @@ class SudokuGrid(object):
 
         # Otherwise, use simple binary search to determine what the value is in a minimal number of questions
         pivot = round(len(indices) / 2)
-        # answer = self.interrogator.ask("Is the value for the ({}, {}) cell greater than or equal to {} ? ".format(row, col, options[pivot]))
-        answer = self.interrogator.ask(( coordinate, ">=", options[pivot]))
+        answer = self.questioner.ask(( coordinate, ">=", options[pivot]))
         logging.debug(answer)
-        indices = indices[pivot:] if answer == True else indices[:pivot]
-
-        return self.determine_cell(coordinate, indices)
-        # strike whichever half was eliminated
-        # call itself again
+        # determine the cell with the new valid possibilities
+        return self.determine_cell(coordinate, indices[pivot:] if answer == True else indices[:pivot])
+        
 
 
     def viable_indices(self, coordinate):
         # any entry with 1 is a viable index
         return np.where(self.grid[coordinate] == 1)[0]
-        
+
     def __repr__(self):
         strings = []
         for i in range(self.grid.shape[0]):
             strings.append([pretty_print_indices( indices_to_options(self.viable_indices((i,j))) ).split("\n") for j in range(self.grid.shape[1])])
 
-        line_separator = "|" + "-" * 17 + "||" + "-" * 17 + "||" + "-" * 17 + "|\n"
+        line_separator = "|" + ("-" * 17 + "||")*2  + "-" * 17 + "|\n"
         massive_str = line_separator
 
         for idx, row in enumerate(strings):
@@ -134,10 +132,7 @@ class SudokuGrid(object):
                 grouped_strings.insert(3, "")
                 grouped_strings.insert(7, "")
                 massive_str += "|" + "|".join(grouped_strings) + "|\n"
-            massive_str += line_separator
-
-            if idx == 2 or idx == 5:
-                massive_str += line_separator
+            massive_str += 2 * line_separator if idx == 2 or idx == 5 else line_separator
 
         return massive_str
 

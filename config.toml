@@ -1,2 +1,5 @@
 ask_user_mode = false
-logging_level = "debug"
+logging_level = "critical"
+assume_lying = true
+checkpoint_frequency = 7
+interactive_mode = false
