@@ -1,5 +1,9 @@
-ask_user_mode = false
+ask_user_cell_determining_questions = false
+ask_user_checkpointing_questions = false
+
+
 logging_level = "info"
 assume_lying = true
 checkpoint_frequency = 20
-interactive_mode = false
+step_mode = false
+computer_can_lie = false

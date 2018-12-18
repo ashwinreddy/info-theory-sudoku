@@ -19,10 +19,10 @@ def solve(sg, cells, assume_lying, checkpoint_frequency, interactive_mode = Fals
     while not sg.completed:
         # Three conditions for checkpointing: 
         # 1. A question needs to have been asked
-        # 2. It needs to be after the appropriate number of questions have passed
+        # 2. It needs to be after the appropriate number of cells have been determined
         # 3. The lie hasn't been caught yet
-        if sg.questioner.questions_asked > 0 and sg.questioner.questions_asked % checkpoint_frequency == 0 and not has_lie_been_caught:
-            logging.debug("Time for a checkpoint!")
+        if sg.questioner.questions_asked > 0 and sg.num_cells_determined % checkpoint_frequency == 0 and not has_lie_been_caught:
+            logging.info("Time for a checkpoint!")
             has_lie_been_caught = sg.checkpoint()
             if has_lie_been_caught:
                 i -= 7
@@ -42,13 +42,14 @@ class SudokuGrid(object):
         # (i, j, k): i is the row, j is the column, k is viability (1 if viable, 0 otherwise)
         self.grid = np.ones((9,9,9), dtype='int8')
         self.questioner = questioner
+        self.num_cells_determined = 0
         self.checkpointed_copy_of_grid = np.copy(self.grid)
     
     def checkpoint(self):
-        print("Need to make sure the user's grid agrees with my grid so far")
+        logging.info("Need to make sure the user's grid agrees with my grid so far")
         rewinding_required = self.questioner.is_rewinding_required(self.collapsed_grid)
         if rewinding_required:
-            print("All the answers from the last checkpoint to here are suspect. Stop checkpointing after this")
+            logging.info("All the answers from the last checkpoint to here are suspect. Stop checkpointing after this")
             self.grid = np.copy(self.checkpointed_copy_of_grid)
             return True
         else:
@@ -85,6 +86,7 @@ class SudokuGrid(object):
         Changes the grid's values so that (row, col)'s only viable option is entry.
         Then strikes the value of entry from all neighbors (same row, same column, same 3x3 grid)
         """
+        self.num_cells_determined += 1
 
         row = coordinate[0]
         col = coordinate[1]
