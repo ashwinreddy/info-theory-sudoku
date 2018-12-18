@@ -1,11 +1,6 @@
 import numpy as np
 import logging
 
-
-def pretty_print_indices(indices):
-    return """{} {} {}\n{} {} {}\n{} {} {}
-    """.format(*[i if i in indices else " " for i in range(1,10)])
-
 def indices_to_options(indices):
     return [idx + 1 for idx in indices]
 
@@ -46,11 +41,12 @@ class SudokuGrid(object):
         self.checkpointed_copy_of_grid = np.copy(self.grid)
     
     def checkpoint(self):
-        logging.info("Need to make sure the user's grid agrees with my grid so far")
+        logging.info("Will check if the user's grid agrees with my grid so far")
         rewinding_required = self.questioner.is_rewinding_required(self.collapsed_grid)
         if rewinding_required:
             logging.info("All the answers from the last checkpoint to here are suspect. Stop checkpointing after this")
             self.grid = np.copy(self.checkpointed_copy_of_grid)
+            self.num_cells_determined -= 7
             return True
         else:
             logging.info("There haven't been any lies since the last checkpoint. Recording this grid so far as valid, and moving on with the assumption that a lie could show up later.")
@@ -142,6 +138,10 @@ class SudokuGrid(object):
 
     def __repr__(self):
         strings = []
+
+        def pretty_print_indices(indices):
+            return """{} {} {}\n{} {} {}\n{} {} {}""".format(*[i if i in indices else " " for i in range(1,10)])
+        
         for i in range(self.grid.shape[0]):
             strings.append([pretty_print_indices( indices_to_options(self.viable_indices((i,j))) ).split("\n") for j in range(self.grid.shape[1])])
 

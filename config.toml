@@ -6,4 +6,4 @@ logging_level = "info"
 assume_lying = true
 checkpoint_frequency = 20
 step_mode = false
-computer_can_lie = false
+computer_can_lie = true
