@@ -28,7 +28,8 @@ def main():
 
 
     test_grid  = np.loadtxt("test_grids/2.txt", delimiter=' ', dtype='int8')
-    questioner = Questioner(ask_user_cdqs, ask_user_ckpt, test_grid, computer_can_lie)
+    questioner = Questioner(ask_user_cdqs, ask_user_ckpt, computer_can_lie)
+    questioner.set_grid(test_grid)
     sg         = SudokuGrid(questioner)
     solve(sg, np.arange(81), assume_lying, checkpoint_frequency, step_mode)
 
