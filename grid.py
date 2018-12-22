@@ -38,23 +38,23 @@ class SudokuGrid(object):
         self.grid = np.ones((9,9,9), dtype='int8')
         self.questioner = questioner
         self.num_cells_determined = 0
-        self.ckpt_copy = self
+        self.ckpt_copy = np.copy(self.grid)
     
     def rewind_to_checkpoint(self):
-        self = self.ckpt_copy
+        self.grid = np.copy(self.ckpt_copy)
     
     def checkpoint(self, checkpoint_frequency):
         logging.info("Will check if the user's grid agrees with my grid so far")
         rewinding_required = self.questioner.is_rewinding_required(self.collapsed_grid)
         if rewinding_required:
-            logging.info("All the answers from the last checkpoint to here are suspect. Stop checkpointing after this")
+            logging.info("Let's figure out which of the last {} questions was answered with a lie. Stop checkpointing after this".format(checkpoint_frequency))
             # self.grid = np.copy(self.ckpt_copy)
             self.rewind_to_checkpoint()
             self.num_cells_determined -= checkpoint_frequency
             return True
         else:
             logging.info("There haven't been any lies since the last checkpoint. Recording this grid so far as valid, and moving on with the assumption that a lie could show up later.")
-            self.ckpt_copy = self
+            self.ckpt_copy = np.copy(self.grid)
             return False
 
     def __getitem__(self, coordinate):
@@ -117,11 +117,12 @@ class SudokuGrid(object):
         logging.debug("Determining the value of {} with possibilities {}".format(coordinate, options))
 
         if len(options) == 0:
+            logging.warning("Rewinding because cell has no options")
             self.rewind_to_checkpoint()
 
         # When there are only 2 possibilities, ask which one it is, and return the answer
         if len(options) == 2:
-            answer = self.questioner.ask( (coordinate, "==", options[1] ))
+            answer = self.questioner.ask_cdq( (coordinate, "==", options[1] ))
             logging.debug(answer)
             return self.assign_cell(coordinate, options[bool(answer)])
         elif len(options) == 1:
@@ -129,7 +130,7 @@ class SudokuGrid(object):
 
         # Otherwise, use simple binary search to determine what the value is in a minimal number of questions
         pivot = round(len(indices) / 2)
-        answer = self.questioner.ask(( coordinate, ">=", options[pivot]))
+        answer = self.questioner.ask_cdq(( coordinate, ">=", options[pivot]))
         logging.debug(answer)
         # determine the cell with the new valid possibilities
         return self.determine_cell(coordinate, indices[pivot:] if answer == True else indices[:pivot])

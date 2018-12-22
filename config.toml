@@ -1,9 +1,16 @@
-ask_user_cell_determining_questions = false
-ask_user_checkpointing_questions = false
+[ui]
+step_mode = false
 
+[questioning]
+ask_user_cdqs = false
+ask_user_ckpt = false
+computer_can_lie = true
 
-logging_level = "debug"
+[algorithm]
 assume_lying = true
 checkpoint_frequency = 20
-step_mode = false
-computer_can_lie = true
+
+
+[logging]
+logging_level = "info"
+

@@ -6,32 +6,28 @@ operator_to_human_readable = {
     ">=": "greater than or equal to"
 }
 
+def ask_human_question(prompt):
+    return input(prompt + " (y/n)") == "yes"
+
 class Questioner(object):
-    def __init__(self, ask_user_cell_determining_questions, ask_user_checkpointing_questions, can_lie):
-        self.ask_user_cell_determining_questions = ask_user_cell_determining_questions
-        self.ask_user_checkpointing_questions = ask_user_checkpointing_questions
+    def __init__(self, ask_user_cdqs, ask_user_ckpt, grid, can_lie):
+        self.ask_user_cdqs = ask_user_cdqs
+        self.ask_user_ckpt = ask_user_ckpt
         self.questions_asked = 0
         self.can_lie = can_lie
         self.has_lied_yet = False
-        if self.can_lie:
-            logging.debug("Oh boy! I'm allowed to lie!")
-    
-    def set_grid(self, grid):
         self.grid = grid
     
-    def _ask_computer_cell_determining_question(self, question):
+    def _ask_computer_cdq(self, question):
         question = "{} {} {}".format(self.grid[question[0]], question[1], question[2])
         answer = eval(question)
         return answer
     
-    def _ask_human_cell_determining_question(self, human_readable_question):
-        return input(human_readable_question) == "yes"
-    
-    def ask(self, question):
+    def ask_cdq(self, question):
         human_readable_question = "Is the value in {}th cell {} {} ? ".format(question[0], operator_to_human_readable[question[1]], question[2])
-        logging.debug(human_readable_question)
+        logging.info(human_readable_question)
 
-        answer = self._ask_human_cell_determining_question(human_readable_question) if self.ask_user_cell_determining_questions else self._ask_computer_cell_determining_question(question)
+        answer = ask_human_question(human_readable_question) if self.ask_user_cdqs else self._ask_computer_cdq(question)
         
         self.questions_asked += 1
         return self._answer_question_as_computer(answer)[0]
@@ -63,7 +59,7 @@ class Questioner(object):
         rewindingRequired = False
         didLieOnCheckpointQuestion = False
 
-        if self.ask_user_checkpointing_questions:
+        if self.ask_user_ckpt:
             rewindingRequired = input(human_readable_question) == "yes"
             didLieOnCheckpointQuestion = input("Did you just lie on this last question? ") == "yes"
         else:
@@ -72,5 +68,7 @@ class Questioner(object):
         if didLieOnCheckpointQuestion:
             rewindingRequired = not rewindingRequired
 
+        logging.info("Rewinding required: "+ str(rewindingRequired))
+        
         self.questions_asked += 2
         return rewindingRequired
