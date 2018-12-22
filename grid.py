@@ -5,6 +5,7 @@ def indices_to_options(indices):
     return [idx + 1 for idx in indices]
 
 def solve(sg, cells, assume_lying, checkpoint_frequency, interactive_mode = False):
+    logging.debug("Solving grid")
     i = 0
 
     # If we're assuming that the person can lie, then the lie has not yet been caught.
@@ -12,13 +13,10 @@ def solve(sg, cells, assume_lying, checkpoint_frequency, interactive_mode = Fals
     has_lie_been_caught = False if assume_lying else True
     
     while not sg.completed:
-        # Three conditions for checkpointing: 
-        # 1. A question needs to have been asked
-        # 2. It needs to be after the appropriate number of cells have been determined
-        # 3. The lie hasn't been caught yet
-        if sg.questioner.questions_asked > 0 and sg.num_cells_determined % checkpoint_frequency == 0 and not has_lie_been_caught:
+        logging.info("Questions asked: {}. Cells Determined: {}. Lie Caught: {}".format(sg.questioner.questions_asked, sg.num_cells_determined, has_lie_been_caught))
+        if sg.questioner.questions_asked % checkpoint_frequency == 1 and not has_lie_been_caught:
             logging.info("Time for a checkpoint!")
-            has_lie_been_caught = sg.checkpoint(checkpoint_frequency)
+            has_lie_been_caught = checkpoint(sg)
             if has_lie_been_caught:
                 i -= checkpoint_frequency
 
@@ -27,35 +25,40 @@ def solve(sg, cells, assume_lying, checkpoint_frequency, interactive_mode = Fals
         i += 1
         if interactive_mode:
             input("? ")
+
+    print("Algorithm has solved grid, as shown below")
     print(sg)
-    print(sg.questioner.questions_asked)
+    print("{} questions were asked".format(sg.questioner.questions_asked))
+
+def checkpoint(sg):
+    rewinding_required = sg.questioner.ask_if_rewinding_required(sg.collapsed_grid)
+    if rewinding_required:
+        logging.warn("A LIE HAS BEEN CAUGHT! Let's figure out which of the last {} questions was answered with a lie. Stop checkpointing after this".format(sg.checkpoint_frequency))
+        sg.rewind_to_last_checkpoint()
+        sg.num_cells_determined -= sg.checkpoint_frequency
+    else:
+        logging.debug("There haven't been any lies since the last checkpoint. Recording this grid so far as valid, and moving on with the assumption that a lie could show up later.")
+        sg.record_checkpoint()
+    return rewinding_required
+
 
 # This class will keep track of all the known and unknown cells
 class SudokuGrid(object):
-    def __init__(self, questioner):
+    def __init__(self, questioner, checkpoint_frequency):
         logging.debug("Instantiating SudokuGrid")
         # (i, j, k): i is the row, j is the column, k is viability (1 if viable, 0 otherwise)
         self.grid = np.ones((9,9,9), dtype='int8')
         self.questioner = questioner
         self.num_cells_determined = 0
-        self.ckpt_copy = np.copy(self.grid)
+        self.record_checkpoint()
+        self.checkpoint_frequency = checkpoint_frequency
     
-    def rewind_to_checkpoint(self):
+    def rewind_to_last_checkpoint(self):
         self.grid = np.copy(self.ckpt_copy)
     
-    def checkpoint(self, checkpoint_frequency):
-        logging.info("Will check if the user's grid agrees with my grid so far")
-        rewinding_required = self.questioner.is_rewinding_required(self.collapsed_grid)
-        if rewinding_required:
-            logging.info("Let's figure out which of the last {} questions was answered with a lie. Stop checkpointing after this".format(checkpoint_frequency))
-            # self.grid = np.copy(self.ckpt_copy)
-            self.rewind_to_checkpoint()
-            self.num_cells_determined -= checkpoint_frequency
-            return True
-        else:
-            logging.info("There haven't been any lies since the last checkpoint. Recording this grid so far as valid, and moving on with the assumption that a lie could show up later.")
-            self.ckpt_copy = np.copy(self.grid)
-            return False
+    def record_checkpoint(self):
+        self.ckpt_copy = np.copy(self.grid)
+    
 
     def __getitem__(self, coordinate):
         return self.grid[coordinate]
@@ -118,7 +121,7 @@ class SudokuGrid(object):
 
         if len(options) == 0:
             logging.warning("Rewinding because cell has no options")
-            self.rewind_to_checkpoint()
+            self.rewind_to_last_checkpoint()
 
         # When there are only 2 possibilities, ask which one it is, and return the answer
         if len(options) == 2:
@@ -139,16 +142,13 @@ class SudokuGrid(object):
 
     def viable_indices(self, coordinate):
         # any entry with 1 is a viable index
-        return np.where(self.grid[coordinate] == 1)[0]
+        return np.where(self[coordinate] == 1)[0]
 
     def __repr__(self):
-        strings = []
-
         def pretty_print_indices(indices):
             return """{} {} {}\n{} {} {}\n{} {} {}""".format(*[i if i in indices else " " for i in range(1,10)])
         
-        for i in range(self.grid.shape[0]):
-            strings.append([pretty_print_indices( indices_to_options(self.viable_indices((i,j))) ).split("\n") for j in range(self.grid.shape[1])])
+        strings = [[pretty_print_indices( indices_to_options(self.viable_indices((i,j)))).split("\n") for j in range(self.grid.shape[1])] for i in range(9)]
 
         line_separator = "|" + ("-" * 17 + "||")*2  + "-" * 17 + "|\n"
         massive_str = line_separator
