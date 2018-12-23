@@ -14,7 +14,7 @@ def solve(sg, cells, assume_lying, checkpoint_frequency, interactive_mode = Fals
     
     while not sg.completed:
         logging.info("Questions asked: {}. Cells Determined: {}. Lie Caught: {}".format(sg.questioner.questions_asked, sg.num_cells_determined, has_lie_been_caught))
-        if sg.questioner.questions_asked % checkpoint_frequency == 1 and not has_lie_been_caught:
+        if sg.num_cells_determined % checkpoint_frequency == 1 and not has_lie_been_caught:
             logging.info("Time for a checkpoint!")
             has_lie_been_caught = checkpoint(sg)
             if has_lie_been_caught:

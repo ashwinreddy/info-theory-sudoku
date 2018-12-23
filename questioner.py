@@ -49,7 +49,7 @@ class Questioner(object):
         return answer
     
     def _answer_question_as_computer(self, true_response):
-        if self.can_lie and not self.has_lied_yet and random.random() > 0.8:
+        if self.can_lie and not self.has_lied_yet and self.questions_asked > 10 and random.random() > 0.9:
             self.has_lied_yet = True
             logging.warning("Lying on this question")
             return not true_response

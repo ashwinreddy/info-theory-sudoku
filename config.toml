@@ -11,5 +11,5 @@ assume_lying = true
 checkpoint_frequency = 7
 
 [logging]
-logging_level = "info"
+logging_level = "debug"
 
