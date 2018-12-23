@@ -13,8 +13,8 @@ def solve(sg, cells, assume_lying, checkpoint_frequency, interactive_mode = Fals
     has_lie_been_caught = False if assume_lying else True
     
     while not sg.completed:
-        logging.info("Questions asked: {}. Cells Determined: {}. Lie Caught: {}".format(sg.questioner.questions_asked, sg.num_cells_determined, has_lie_been_caught))
-        if sg.num_cells_determined % checkpoint_frequency == 1 and not has_lie_been_caught:
+        logging.debug("Questions asked: {}. Cells Determined: {}. Lie Caught: {}".format(sg.questioner.questions_asked, sg.num_cells_determined, has_lie_been_caught))
+        if sg.num_cells_determined % checkpoint_frequency == 0 and sg.num_cells_determined >= checkpoint_frequency and not has_lie_been_caught:
             logging.info("Time for a checkpoint!")
             has_lie_been_caught = checkpoint(sg)
             if has_lie_been_caught:
@@ -32,14 +32,25 @@ def solve(sg, cells, assume_lying, checkpoint_frequency, interactive_mode = Fals
 
 def checkpoint(sg):
     rewinding_required = sg.questioner.ask_if_rewinding_required(sg.collapsed_grid)
-    if rewinding_required:
-        logging.warn("A LIE HAS BEEN CAUGHT! Let's figure out which of the last {} questions was answered with a lie. Stop checkpointing after this".format(sg.checkpoint_frequency))
-        sg.rewind_to_last_checkpoint()
-        sg.num_cells_determined -= sg.checkpoint_frequency
+    logging.info("Grid wrong according to Anu: {}".format(rewinding_required))
+    if rewinding_required:    
+        lied_on_ckpt = sg.questioner.ask_if_lied_on_checkpoint()
+        logging.debug("Lied on checkpoint: {}".format(lied_on_ckpt))
+        if lied_on_ckpt:
+            sg.record_checkpoint()
+        else:
+            logging.warn("A LIE HAS BEEN CAUGHT! Let's figure out which of the last {} questions was answered with a lie. Stop checkpointing after this".format(sg.checkpoint_frequency))
+            sg.rewind_to_last_checkpoint()
+            sg.num_cells_determined -= sg.checkpoint_frequency
+        
+        logging.info(sg.collapsed_grid)
+        return rewinding_required
     else:
         logging.debug("There haven't been any lies since the last checkpoint. Recording this grid so far as valid, and moving on with the assumption that a lie could show up later.")
         sg.record_checkpoint()
-    return rewinding_required
+        return False
+    
+
 
 
 # This class will keep track of all the known and unknown cells
@@ -54,6 +65,7 @@ class SudokuGrid(object):
         self.checkpoint_frequency = checkpoint_frequency
     
     def rewind_to_last_checkpoint(self):
+        logging.warning("Rewinding back to checkpoint copy")
         self.grid = np.copy(self.ckpt_copy)
     
     def record_checkpoint(self):

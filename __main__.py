@@ -19,6 +19,7 @@ def main():
     with open('config.toml') as f:
         config                    = toml.loads(f.read())
         logging.basicConfig(level =logging_levels[config['logging']['logging_level']])
+        logging.info(config)
         ask_user_cdqs             = config['questioning']['ask_user_cdqs']
         ask_user_ckpt             = config['questioning']['ask_user_ckpt']
         computer_can_lie          = config['questioning']['computer_can_lie']

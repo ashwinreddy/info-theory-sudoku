@@ -32,13 +32,28 @@ class Questioner(object):
         logging.debug(human_readable_question)
         self.questions_asked += 1
         
-        return ask_human_question(human_readable_question) if self.ask_user_cdqs else self._answer_question_as_computer(self._ask_computer_cdq(question))
+        answer, is_this_correct_answer = ask_human_question(human_readable_question) if self.ask_user_cdqs else self._answer_question_as_computer(self._ask_computer_cdq(question), "cdq")
+
+        if is_this_correct_answer == False:
+            self.has_lied_yet = "cdq"
+
+        return answer
 
     def ask_if_rewinding_required(self, collapsed_grid):
-        human_readable_question = "Does your grid look like this?\n {} \n ? ".format(collapsed_grid)
+        human_readable_question = "Is my current grid below wrong (ignore zeros) ?\n {} \n ? ".format(collapsed_grid)
         logging.debug(human_readable_question)
         self.questions_asked += 1
-        return ask_human_question(human_readable_question) if self.ask_user_ckpt else not self._check_grid_matches_solution(collapsed_grid)
+        
+        if self.ask_user_ckpt:
+            return ask_human_question(human_readable_question)
+        else:
+            answer, is_this_correct_answer = self._answer_question_as_computer(not self._check_grid_matches_solution(collapsed_grid), "ckptq")
+        
+        if is_this_correct_answer == False:
+            self.has_lied_yet = "ckptq"
+        
+        return answer
+        
     
     def _ask_computer_cdq(self, question):
         """
@@ -48,13 +63,13 @@ class Questioner(object):
         answer = eval(question)
         return answer
     
-    def _answer_question_as_computer(self, true_response):
-        if self.can_lie and not self.has_lied_yet and self.questions_asked > 10 and random.random() > 0.9:
+    def _answer_question_as_computer(self, true_response, question_type):
+        if self.can_lie and not self.has_lied_yet and question_type == "ckptq":
             self.has_lied_yet = True
             logging.warning("Lying on this question")
-            return not true_response
+            return (not true_response, False)
         else:
-            return true_response
+            return (true_response, True)
     
     def _check_grid_matches_solution(self, incomplete_grid):
         for i in range(9):
@@ -65,4 +80,7 @@ class Questioner(object):
     
 
     def ask_if_lied_on_checkpoint(self):
-        pass
+        human_readable_question = "Did you lie on the previous question? "
+        logging.info(human_readable_question)
+        logging.info("Internal has lied yet variable: {}".format(self.has_lied_yet))
+        return ask_human_question(human_readable_question) if self.ask_user_cdqs else self.has_lied_yet == "ckptq"
