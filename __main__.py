@@ -27,7 +27,6 @@ def main():
         checkpoint_frequency      = config['algorithm']['checkpoint_frequency']
         step_mode                 = config['ui']['step_mode']    
 
-
     test_grid  = np.loadtxt("test_grids/2.txt", delimiter=' ', dtype='int8')
     questioner = Questioner(ask_user_cdqs, ask_user_ckpt, computer_can_lie)
     questioner.set_grid(test_grid)

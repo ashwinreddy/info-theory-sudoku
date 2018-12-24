@@ -19,6 +19,8 @@ class Questioner(object):
         self.questions_asked = 0
         self.can_lie = can_lie
         self.has_lied_yet = False
+        self.question_number_to_lie_on = random.randint(1,72)
+        # logging.critical("Lying on question # {}".format(self.question_number_to_lie_on))
         
     def set_grid(self, grid):
         self.grid = grid
@@ -28,7 +30,7 @@ class Questioner(object):
         Routes a cell determining question appropriately
         """
 
-        human_readable_question = "Is the value in {}th cell {} {} ? ".format(question[0], operator_to_human_readable[question[1]], question[2])
+        human_readable_question = "Is the value in {}th cell {} {} ? ".format([x + 1 for x in question[0]], operator_to_human_readable[question[1]], question[2])
         logging.debug(human_readable_question)
         self.questions_asked += 1
         
@@ -64,7 +66,7 @@ class Questioner(object):
         return answer
     
     def _answer_question_as_computer(self, true_response, question_type):
-        if self.can_lie and not self.has_lied_yet and question_type == "ckptq":
+        if self.can_lie and not self.has_lied_yet and self.questions_asked == self.question_number_to_lie_on:
             self.has_lied_yet = True
             logging.warning("Lying on this question")
             return (not true_response, False)

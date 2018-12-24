@@ -41,7 +41,6 @@ def checkpoint(sg):
         else:
             logging.warn("A LIE HAS BEEN CAUGHT! Let's figure out which of the last {} questions was answered with a lie. Stop checkpointing after this".format(sg.checkpoint_frequency))
             sg.rewind_to_last_checkpoint()
-            sg.num_cells_determined -= sg.checkpoint_frequency
         
         logging.info(sg.collapsed_grid)
         return rewinding_required
@@ -66,7 +65,13 @@ class SudokuGrid(object):
     
     def rewind_to_last_checkpoint(self):
         logging.warning("Rewinding back to checkpoint copy")
+        self.checkpoint_frequency
         self.grid = np.copy(self.ckpt_copy)
+
+        if self.num_cells_determined % self.checkpoint_frequency == 0 and self.num_cells_determined > 0:
+            self.num_cells_determined -= self.checkpoint_frequency
+        else:
+            self.num_cells_determined -= self.num_cells_determined - (self.num_cells_determined // self.checkpoint_frequency) * self.checkpoint_frequency
     
     def record_checkpoint(self):
         self.ckpt_copy = np.copy(self.grid)
@@ -128,12 +133,14 @@ class SudokuGrid(object):
         """
         Uses binary search to determine what (row, col)'s value is, given a list of viable indices
         """
+        logging.debug("Determining value for cell {}".format(coordinate))
         options = indices_to_options(indices)
         logging.debug("Determining the value of {} with possibilities {}".format(coordinate, options))
 
         if len(options) == 0:
             logging.warning("Rewinding because cell has no options")
             self.rewind_to_last_checkpoint()
+            return
 
         # When there are only 2 possibilities, ask which one it is, and return the answer
         if len(options) == 2:
@@ -145,6 +152,7 @@ class SudokuGrid(object):
 
         # Otherwise, use simple binary search to determine what the value is in a minimal number of questions
         pivot = round(len(indices) / 2)
+
         answer = self.questioner.ask_cdq(( coordinate, ">=", options[pivot]))
         logging.debug(answer)
         # determine the cell with the new valid possibilities
@@ -154,7 +162,9 @@ class SudokuGrid(object):
 
     def viable_indices(self, coordinate):
         # any entry with 1 is a viable index
-        return np.where(self[coordinate] == 1)[0]
+        vi = np.where(self[coordinate] == 1)[0]
+        logging.critical("Viable indices for {}: {}".format(coordinate, vi))
+        return vi
 
     def __repr__(self):
         def pretty_print_indices(indices):
@@ -186,6 +196,7 @@ class SudokuGrid(object):
 
     @property
     def collapsed_grid(self):
+        logging.critical(self.grid.shape)
         grid = [[0 if np.count_nonzero(self[i][j] == 1) > 1 else 1 + np.where(self[i][j] == 1)[0][0] for j in range(9) ] for i in range(9)]
         return np.array(grid)
 
