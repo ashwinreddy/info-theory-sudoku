@@ -16,6 +16,8 @@ def solve(sg, cells, assume_lying, checkpoint_frequency, interactive_mode = Fals
         logging.debug("Questions asked: {}. Cells Determined: {}. Lie Caught: {}".format(sg.questioner.questions_asked, sg.num_cells_determined, has_lie_been_caught))
         if sg.num_cells_determined % checkpoint_frequency == 0 and sg.num_cells_determined >= checkpoint_frequency and not has_lie_been_caught:
             logging.info("Time for a checkpoint!")
+            if sg.shortcircuited:
+                sg.rewind_to_last_checkpoint()
             has_lie_been_caught = checkpoint(sg)
             if has_lie_been_caught:
                 i -= checkpoint_frequency
@@ -133,14 +135,17 @@ class SudokuGrid(object):
         """
         Uses binary search to determine what (row, col)'s value is, given a list of viable indices
         """
+        if len(indices) == 0:
+            logging.warning("Rewinding because cell has no options")
+            print(self.shortcircuited)
+            self.rewind_to_last_checkpoint()
+            return
+
         logging.debug("Determining value for cell {}".format(coordinate))
         options = indices_to_options(indices)
         logging.debug("Determining the value of {} with possibilities {}".format(coordinate, options))
 
-        if len(options) == 0:
-            logging.warning("Rewinding because cell has no options")
-            self.rewind_to_last_checkpoint()
-            return
+        
 
         # When there are only 2 possibilities, ask which one it is, and return the answer
         if len(options) == 2:
@@ -196,8 +201,16 @@ class SudokuGrid(object):
 
     @property
     def collapsed_grid(self):
-        logging.critical(self.grid.shape)
+        # logging.critical(self.grid.shape)
         grid = [[0 if np.count_nonzero(self[i][j] == 1) > 1 else 1 + np.where(self[i][j] == 1)[0][0] for j in range(9) ] for i in range(9)]
         return np.array(grid)
 
     # def count_solutions(self):
+
+    @property
+    def shortcircuited(self):
+        for i in range(9):
+            for j in range(9):
+                if np.count_nonzero(self[i][j]) == 0:
+                    return (i, j)
+        return False
