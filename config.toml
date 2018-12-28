@@ -4,11 +4,11 @@ step_mode = false
 [questioning]
 ask_user_cdqs = false
 ask_user_ckpt = false
-computer_can_lie = true
+computer_can_lie = false
 
 [algorithm]
-assume_lying = true
-checkpoint_frequency = 7
+assume_lying = false
+checkpoint_frequency = 4
 
 [logging]
 logging_level = "debug"

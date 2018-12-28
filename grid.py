@@ -1,5 +1,7 @@
 import numpy as np
 import logging
+from backtracking import solve_from_lower, solve_from_upper
+import sys
 
 def indices_to_options(indices):
     return [idx + 1 for idx in indices]
@@ -24,12 +26,34 @@ def solve(sg, cells, assume_lying, checkpoint_frequency, interactive_mode = Fals
 
         coordinate = np.unravel_index(cells[i], (9,9))
         sg.determine_cell(coordinate, sg.viable_indices(coordinate))
+        
+        if sg.num_cells_determined >= 17:
+            print(sg.collapsed_grid)
+            grid_copy1 = np.copy(sg.collapsed_grid)
+            grid_copy2 = np.copy(sg.collapsed_grid)
+            solve_from_lower(grid_copy1)
+            solve_from_upper(grid_copy2)
+            print(grid_copy1 - grid_copy2)
+            print("----------------------")
+            if np.array_equal(grid_copy1, grid_copy2):
+                print(grid_copy1)
+                print(sg.questioner.questions_asked)
+                sys.exit()
+            # num_solutions = sg.count_solutions()
+            # print("Num solutions",  num_solutions, "Cells determined", sg.num_cells_determined)
+            # if num_solutions == 1:
+            #     print("There is only one solution")
+            #     print("Cells determined", sg.num_cells_determined)
+            #     break
+
+        
         i += 1
         if interactive_mode:
             input("? ")
 
     print("Algorithm has solved grid, as shown below")
     print(sg)
+    print(sg.collapsed_grid)
     print("{} questions were asked".format(sg.questioner.questions_asked))
 
 def checkpoint(sg):
@@ -56,10 +80,10 @@ def checkpoint(sg):
 
 # This class will keep track of all the known and unknown cells
 class SudokuGrid(object):
-    def __init__(self, questioner, checkpoint_frequency):
+    def __init__(self, questioner = None, checkpoint_frequency = None, grid = np.ones((9,9,9), dtype='int8')):
         logging.debug("Instantiating SudokuGrid")
         # (i, j, k): i is the row, j is the column, k is viability (1 if viable, 0 otherwise)
-        self.grid = np.ones((9,9,9), dtype='int8')
+        self.grid = grid # np.ones((9,9,9), dtype='int8')
         self.questioner = questioner
         self.num_cells_determined = 0
         self.record_checkpoint()
@@ -90,15 +114,6 @@ class SudokuGrid(object):
                 return np.unravel_index(i, (9,9))
             i += 1
         return False
-    
-    def count_solutions(self):
-        pass
-        # cell = self.find_empty_location()
-        # viable_solution = np.argmax(self.grid[cell] == 1)
-        # grid_array_copy = np.copy(self.grid)
-        # sg = SudokuGrid(grid_array_copy)
-        # sg.assign_cell(cell[0], cell[1], viable_solution)
-        # return sg.count_solutions()
 
     def eliminate_option_for_cell(self, coordinate, entry):
         self[coordinate][entry - 1] = 0    
@@ -168,7 +183,7 @@ class SudokuGrid(object):
     def viable_indices(self, coordinate):
         # any entry with 1 is a viable index
         vi = np.where(self[coordinate] == 1)[0]
-        logging.critical("Viable indices for {}: {}".format(coordinate, vi))
+        # logging.debug("Viable indices for {}: {}".format(coordinate, vi))
         return vi
 
     def __repr__(self):
@@ -204,8 +219,23 @@ class SudokuGrid(object):
         # logging.critical(self.grid.shape)
         grid = [[0 if np.count_nonzero(self[i][j] == 1) > 1 else 1 + np.where(self[i][j] == 1)[0][0] for j in range(9) ] for i in range(9)]
         return np.array(grid)
+    
+    @property
+    def first_undetermined_cell(self):
+        for i in range(9):
+            for j in range(9):
+                if np.count_nonzero(self[i][j]) != 1:
+                    return (i,j)
+        return False
 
-    # def count_solutions(self):
+
+    @property
+    def fully_determined(self):
+        for i in range(9):
+            for j in range(9):
+                if np.count_nonzero(self[i][j]) != 1:
+                    return False
+        return True
 
     @property
     def shortcircuited(self):
