@@ -12,4 +12,3 @@ checkpoint_frequency = 4
 
 [logging]
 logging_level = "debug"
-

@@ -1,6 +1,6 @@
 import numpy as np
 import logging
-from backtracking import solve_from_lower, solve_from_upper
+from backtracking import solve_by_backtracking
 import sys
 
 def indices_to_options(indices):
@@ -31,14 +31,13 @@ def solve(sg, cells, assume_lying, checkpoint_frequency, interactive_mode = Fals
             print(sg.collapsed_grid)
             grid_copy1 = np.copy(sg.collapsed_grid)
             grid_copy2 = np.copy(sg.collapsed_grid)
-            solve_from_lower(grid_copy1)
-            solve_from_upper(grid_copy2)
-            print(grid_copy1 - grid_copy2)
-            print("----------------------")
-            if np.array_equal(grid_copy1, grid_copy2):
-                print(grid_copy1)
-                print(sg.questioner.questions_asked)
-                sys.exit()
+            if solve_by_backtracking(grid_copy1, mode = "lower") and solve_by_backtracking(grid_copy2, mode = "upper"):
+                print(grid_copy1 - grid_copy2)
+                print("----------------------")
+                if np.array_equal(grid_copy1, grid_copy2):
+                    print(grid_copy1)
+                    print(sg.questioner.questions_asked)
+                    sys.exit()
             # num_solutions = sg.count_solutions()
             # print("Num solutions",  num_solutions, "Cells determined", sg.num_cells_determined)
             # if num_solutions == 1:

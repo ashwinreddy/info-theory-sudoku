@@ -31,7 +31,9 @@ def main():
     questioner = Questioner(ask_user_cdqs, ask_user_ckpt, computer_can_lie)
     questioner.set_grid(test_grid)
     sg         = SudokuGrid(questioner, checkpoint_frequency)
-    solve(sg, np.arange(81), assume_lying, checkpoint_frequency, step_mode)
+    questioning = np.arange(81)
+    np.random.shuffle(questioning)
+    solve(sg, questioning, assume_lying, checkpoint_frequency, step_mode)
 
 if __name__ == "__main__":
     main()
