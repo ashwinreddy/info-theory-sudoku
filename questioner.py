@@ -11,14 +11,15 @@ def ask_human_question(prompt):
 
 class Questioner(object):
     """
-    Routes questions to user or program and answers appropriately (lying if it is allowed to do so)
+    Routes questions to user or program and answers appropriately (lying if it is allowed to do so and within the bounds of the game)
     """
     def __init__(self, ask_user_cdqs, ask_user_ckpt, can_lie):
-        self.ask_user_cdqs = ask_user_cdqs
-        self.ask_user_ckpt = ask_user_ckpt
-        self.questions_asked = 0
-        self.can_lie = can_lie
-        self.has_lied_yet = False
+        logging.debug("Instantiating Questioner")
+        self.ask_user_cdqs             = ask_user_cdqs
+        self.ask_user_ckpt             = ask_user_ckpt
+        self.questions_asked           = 0
+        self.can_lie                   = can_lie
+        self.has_lied_yet              = False
         self.question_number_to_lie_on = 1 # random.randint(1,72)
         
     def set_grid(self, grid):

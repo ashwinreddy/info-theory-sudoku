@@ -9,6 +9,7 @@ computer_can_lie = false
 [algorithm]
 assume_lying = false
 checkpoint_frequency = 4
+test_grid = "test_grids/1.txt"
 
 [logging]
 logging_level = "debug"
