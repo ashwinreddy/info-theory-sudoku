@@ -251,7 +251,15 @@ class SudokuGrid(Grid):
                 if np.count_nonzero(self[i][j]) != 1:
                     return (i,j)
         return False
-
+    
+    @property
+    def undetermined_cells(self):
+        undetermined_cells = []
+        for i in range(9):
+            for j in range(9):
+                if np.count_nonzero(self[i][j]) != 1:
+                    undetermined_cells.append((i,j))
+        return undetermined_cells
 
     @property
     def fully_determined(self):
@@ -268,3 +276,13 @@ class SudokuGrid(Grid):
                 if np.count_nonzero(self[i][j]) == 0:
                     return (i, j)
         return False
+    
+    def count_solutions(self):
+        print("Counting solutions")
+        while len(self.undetermined_cells) > 0:
+            print("Shortcircuited", self.shortcircuited)
+            # determining the ith cell's value
+            cell = self.undetermined_cells[0]
+            print(cell)
+            for value in self.viable_indices(cell):
+                self.assign_cell(cell, value)
