@@ -1,7 +1,7 @@
 import numpy as np
 import logging
 from backtracking import solve_by_backtracking
-from grid import SudokuGrid, Grid
+from sudoku_grid import SudokuGrid
 # from grid import solve_by_backtracking
 
 

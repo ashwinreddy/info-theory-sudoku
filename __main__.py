@@ -1,7 +1,7 @@
 # Determines a sudoku grid by asking the user questions
 import numpy as np
 
-from grid import SudokuGrid
+from sudoku_grid import SudokuGrid
 from solver import solve
 from questioner import Questioner
 
