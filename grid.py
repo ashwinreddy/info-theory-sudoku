@@ -57,7 +57,6 @@ class Grid(object):
         """
         logging.debug("Assigning entry {} the value {}".format(coordinate, entry))
         # self.num_cells_determined += 1
-
         row = coordinate[0]
         col = coordinate[1]
 

@@ -17,6 +17,8 @@ def solve(sg, cells, assume_lying, checkpoint_frequency, interactive_mode = Fals
     grid_copies_2 = []
     
     while not sg.completed:
+        print("Tree")
+        print(sg.tree)
         logging.debug("Questions asked: {}. Cells Determined: {}. Lie Caught: {}".format(sg.questioner.questions_asked, sg.num_cells_determined, has_lie_been_caught))
         if sg.num_cells_determined % checkpoint_frequency == 0 and sg.num_cells_determined >= checkpoint_frequency and not has_lie_been_caught:
             logging.info("Time for a checkpoint!")

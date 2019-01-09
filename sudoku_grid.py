@@ -2,9 +2,46 @@ import numpy as np
 import logging
 from grid import Grid, indices_to_options
 
-class Tree:
-    def __init__(self, children):
-        self.children = children
+# retrieved from http://code.activestate.com/recipes/578948-flattening-an-arbitrarily-nested-list-in-python/
+def flatten(lis):
+    """Given a list, possibly nested to any level, return it flattened."""
+    new_lis = []
+    for item in lis:
+        if type(item) == type([]):
+            new_lis.extend(flatten(item))
+        else:
+            new_lis.append(item)
+    return new_lis
+
+class Tree(object):
+    def __init__(self, cell, children):
+        self.cell      = cell
+        self.children  = children
+    
+    def __repr__(self):
+        return "Tree({}, {})".format(self.cell, self.children)
+    
+    def fill_children(self, sg):
+        print("Filling children for {}".format(self))
+        children_with_trees = []
+        for child in self.children:
+            print("Here is a viable index for this node {}: {}".format(self.cell, child))
+            sg_copy = sg.deepcopy()
+            print("Assigning {} {}".format(self.cell, child))
+            sg_copy.assign_cell(self.cell, child)
+            next_undetermined_cell = sg_copy.undetermined_cells[0]
+            vi = sg_copy.viable_indices(next_undetermined_cell)
+            children_with_trees.append(Tree(next_undetermined_cell, vi))
+        self.children = children_with_trees
+        return self
+    
+    def find_leaves(self):
+        print("Finding leaves for {}".format(self))
+        if type(self.children[0]) is not Tree:
+            return [self]
+        else:
+            return [x.find_leaves() for x in self.children]
+            
 
 # This class will keep track of all the known and unknown cells
 class SudokuGrid(Grid):
@@ -170,11 +207,16 @@ class SudokuGrid(Grid):
             for value in self.viable_indices(cell):
                 self.assign_cell(cell, value)
     
+ 
     @property
     def tree(self):
-        undetermined_cells = self.undetermined_cells
-        
-        tree = Tree([])
+        tree = Tree(self.undetermined_cells[0], self.viable_indices(self.undetermined_cells[0]))
+        print("The root node: {}".format(tree))
+        tree.fill_children(self)
+        for child in flatten(tree.find_leaves()):
+            child.fill_children(self)
+        # return tree.fill_children(self)
+    
 
-        for cell in undetermined_cells:
-            self.viable_indices(cell)
+    def deepcopy(self):
+        return SudokuGrid(grid=np.copy(self.grid))
