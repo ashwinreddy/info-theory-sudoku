@@ -14,42 +14,69 @@ def flatten(lis):
     return new_lis
 
 class Tree(object):
-    def __init__(self, cell, children):
+    def __init__(self, cell, grid_copy, children, parent):
         self.cell      = cell
+        self.grid_copy = grid_copy
         self.children  = children
+        self.parent    = parent
     
     def __repr__(self):
         return "Tree({}, {})".format(self.cell, self.children)
     
-    def fill_children(self, sg):
+    def fill_children(self):
         print("Filling children for {}".format(self))
         children_with_trees = []
+        if self.parent is not None:
+            sg = self.parent.grid_copy
+        else:
+            sg = self.grid_copy
+        
+        print("Here is the reference grid which all these children I am about to fill will use (initially)", sg)
+        
         for child in self.children:
-            print("Here is a viable index for this node {}: {}".format(self.cell, child))
+            print("Start of loop. Now considering hypothetically choosing {} for the cell {}".format(child + 1, self.cell))
             sg_copy = sg.deepcopy()
-            print("Assigning {} {}".format(self.cell, child))
-            sg_copy.assign_cell(self.cell, child)
-            next_undetermined_cell = sg_copy.undetermined_cells[0]
-            vi = sg_copy.viable_indices(next_undetermined_cell)
-            children_with_trees.append(Tree(next_undetermined_cell, vi))
+            print("Assigning {} {}".format(self.cell, child + 1))
+            sg_copy.assign_cell(self.cell, child + 1)
+            print("Here is this child {} 's unique grid".format(child + 1), sg_copy)
+
+            if not sg_copy.shortcircuited:
+                next_undetermined_cell = sg_copy.undetermined_cells[0]
+                print("Next undetermined cell ", next_undetermined_cell)
+                vi = sg_copy.viable_indices(next_undetermined_cell)
+
+                print(sg_copy)
+                print("Adding a tree for {} with indices {}".format(next_undetermined_cell, vi))
+                new_tree = Tree(next_undetermined_cell, sg_copy, vi, self)
+                print("I am adding a new tree", new_tree)
+                print("This new tree has a grid copy", new_tree.grid_copy)
+                children_with_trees.append(new_tree)
+            else:
+                print("Shortcircuited. Therefore, eliminating option {} for cell {}".format(child+1, self.cell))
+                sg_copy.eliminate_option_for_cell(self.cell, child + 1)
+        
         self.children = children_with_trees
         return self
     
     def find_leaves(self):
-        print("Finding leaves for {}".format(self))
-        if type(self.children[0]) is not Tree:
+        # print("Finding leaves for {}".format(self))
+        if len(self.children) == 0 or type(self.children[0]) is not Tree:
             return [self]
         else:
             return [x.find_leaves() for x in self.children]
+        
+    def max_depth(self):
+        if type(self.children[0]) is not Tree:
+            return 1
+        else:
+            return 1 + max([child.max_depth() for child in self.children])
             
 
 # This class will keep track of all the known and unknown cells
 class SudokuGrid(Grid):
     def __init__(self, questioner = None, checkpoint_frequency = None, grid = np.ones((9,9,9), dtype='int8')):
         super(SudokuGrid, self).__init__(grid)
-        
         self.questioner = questioner
-        self.num_cells_determined = 0
         self.record_checkpoint()
         self.checkpoint_frequency = checkpoint_frequency
     
@@ -210,11 +237,40 @@ class SudokuGrid(Grid):
  
     @property
     def tree(self):
-        tree = Tree(self.undetermined_cells[0], self.viable_indices(self.undetermined_cells[0]))
-        print("The root node: {}".format(tree))
-        tree.fill_children(self)
-        for child in flatten(tree.find_leaves()):
-            child.fill_children(self)
+        # print(self)
+        # print(self.viable_indices(self.undetermined_cells[0]))
+        logging.debug("Creating a tree, rooted with the first undetermined cell {}".format(self.undetermined_cells[0]))
+        tree = Tree(self.undetermined_cells[0], SudokuGrid(grid=np.copy(self.grid)), self.viable_indices(self.undetermined_cells[0]), None)
+        logging.debug("Filling children")
+        tree.fill_children()
+        print("Just filled the children for the first time. Tree has depth of ", tree.max_depth())
+        
+        def unfinished_leaves():
+            leaves = flatten(tree.find_leaves())
+            print("This is an exhaustive list of leaves", leaves, "with ", len(leaves), " leaves")
+            unfinished_leaves = []
+            for leaf in leaves:
+                print("Checking if leaf {} creates a complete solution".format(leaf))
+                print("You can check if the leaf creates a complete soln for yourself below")
+                print(leaf.grid_copy)
+                
+                if not leaf.grid_copy.completed and not leaf.grid_copy.shortcircuited:
+                    print("This leaf does not create a complete soln")
+                    unfinished_leaves.append(leaf)
+            print("END OF UNFINISHED LEAVES")
+            return unfinished_leaves
+        
+        ul = unfinished_leaves()
+
+        while len(ul) != 0:
+            print("How deep the tree is", tree.max_depth())
+            print("There are leaves to expand:", ul)
+
+            for child in ul:
+                print("Filling in the children for ", child)
+                child.fill_children()
+
+        return tree
         # return tree.fill_children(self)
     
 

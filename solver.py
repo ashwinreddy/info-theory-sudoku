@@ -2,6 +2,7 @@ import numpy as np
 import logging
 from backtracking import solve_by_backtracking
 from sudoku_grid import SudokuGrid
+import sys
 # from grid import solve_by_backtracking
 
 
@@ -17,8 +18,6 @@ def solve(sg, cells, assume_lying, checkpoint_frequency, interactive_mode = Fals
     grid_copies_2 = []
     
     while not sg.completed:
-        print("Tree")
-        print(sg.tree)
         logging.debug("Questions asked: {}. Cells Determined: {}. Lie Caught: {}".format(sg.questioner.questions_asked, sg.num_cells_determined, has_lie_been_caught))
         if sg.num_cells_determined % checkpoint_frequency == 0 and sg.num_cells_determined >= checkpoint_frequency and not has_lie_been_caught:
             logging.info("Time for a checkpoint!")
@@ -32,7 +31,14 @@ def solve(sg, cells, assume_lying, checkpoint_frequency, interactive_mode = Fals
         sg.determine_cell(coordinate, sg.viable_indices(coordinate))
         
         if sg.num_cells_determined >= 17:
-            sg.count_solutions()
+            print("There are more than 17 cells determined. Showing tree")
+            # print(sg.tree)
+        
+        if sg.num_cells_determined == 72:
+            print(sg.num_cells_determined)
+            print(sg)
+            sys.exit()
+            # sg.count_solutions()
             # grid_copy1 = np.copy(sg.collapsed_grid)
             # grid_copy2 = np.copy(sg.collapsed_grid)
             # sol_grid_1 = solve_by_backtracking(grid_copy1, mode = "lower")

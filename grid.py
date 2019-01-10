@@ -33,6 +33,7 @@ class Grid(object):
     def __init__(self, grid):
         # (i, j, k): i is the row, j is the column, k is viability (1 if viable, 0 otherwise)
         self.grid = grid
+        self.num_cells_determined = 0
 
     def __getitem__(self, coordinate):
         return self.grid[coordinate]
@@ -56,7 +57,7 @@ class Grid(object):
         Then strikes the value of entry from all neighbors (same row, same column, same 3x3 grid)
         """
         logging.debug("Assigning entry {} the value {}".format(coordinate, entry))
-        # self.num_cells_determined += 1
+        self.num_cells_determined += 1
         row = coordinate[0]
         col = coordinate[1]
 
