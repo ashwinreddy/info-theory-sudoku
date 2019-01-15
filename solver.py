@@ -2,6 +2,7 @@ import numpy as np
 import logging
 from backtracking import solve_by_backtracking
 from sudoku_grid import SudokuGrid
+from grid import Grid
 import sys
 # from grid import solve_by_backtracking
 
@@ -16,9 +17,9 @@ def solve(sg, cells, assume_lying, checkpoint_frequency, interactive_mode = Fals
 
     grid_copies_1 = []
     grid_copies_2 = []
-    
     while not sg.completed:
-        logging.debug("Questions asked: {}. Cells Determined: {}. Lie Caught: {}".format(sg.questioner.questions_asked, sg.num_cells_determined, has_lie_been_caught))
+        print("--------------------------------------------")
+        logging.info("Questions asked: {}. Cells Determined: {}. Lie Caught: {}".format(sg.questioner.questions_asked, sg.num_cells_determined, has_lie_been_caught))
         if sg.num_cells_determined % checkpoint_frequency == 0 and sg.num_cells_determined >= checkpoint_frequency and not has_lie_been_caught:
             logging.info("Time for a checkpoint!")
             if sg.shortcircuited:
@@ -29,15 +30,43 @@ def solve(sg, cells, assume_lying, checkpoint_frequency, interactive_mode = Fals
 
         coordinate = np.unravel_index(cells[i], (9,9))
         sg.determine_cell(coordinate, sg.viable_indices(coordinate))
+        sg.double_clear()
+
+        if sg.num_cells_determined >= 60:
+            print("More than 60 cells have been determined. Here is the solution tree:")
+            tree  = sg.tree
+            if tree is not None:
+                print(tree)
+                solutions = tree.find_solutions()
+                if type(solutions) is Grid:
+                    print("There is only one solution and it came from a tree")
+                    print(solutions)
+                    sys.exit()
+                
+                if len(solutions) == 1:
+                    print("There is only one solution and it came from a list")
+                    print(solutions[0])
+                    sys.exit()
+                    # len(solutions) == 1:
+                    # print(solutions[0])
+                    # sys.exit()
         
-        if sg.num_cells_determined >= 17:
-            print("There are more than 17 cells determined. Showing tree")
+        # if sg.num_cells_determined >= 17:
+        #     print("There are more than 17 cells determined. Showing tree")
             # print(sg.tree)
         
-        if sg.num_cells_determined == 72:
-            print(sg.num_cells_determined)
-            print(sg)
-            sys.exit()
+        # if sg.num_cells_determined >= 40:
+        #     tree = sg.tree
+        #     if tree is not None:
+        #         print("Num solutions", tree.num_solutions())
+        #         if tree.num_solutions() == 1:
+        #             soln = tree.find_solution()
+        #             print(soln)
+        #             print(Grid(soln.grid_copy))
+        #             sys.exit()
+        #     print(sg.num_cells_determined)
+        #     print(sg)
+            # sys.exit()
             # sg.count_solutions()
             # grid_copy1 = np.copy(sg.collapsed_grid)
             # grid_copy2 = np.copy(sg.collapsed_grid)

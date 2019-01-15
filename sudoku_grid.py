@@ -7,22 +7,23 @@ def flatten(lis):
     """Given a list, possibly nested to any level, return it flattened."""
     new_lis = []
     for item in lis:
-        if type(item) == type([]):
-            new_lis.extend(flatten(item))
-        else:
-            new_lis.append(item)
+        new_lis.extend(flatten(item)) if type(item) == type([]) else new_lis.append(item)
     return new_lis
 
+
+
 class Tree(object):
-    def __init__(self, cell, grid_copy, children, parent):
+    def __init__(self, cell, grid_copy, children, parent, decision):
         self.cell      = cell
         self.grid_copy = grid_copy
+        self.decision  = decision
         self.children  = children
         self.parent    = parent
     
     def __repr__(self):
-        return "Tree({}, {})".format(self.cell, self.children)
-    
+        # return "Tree(cell = {}, children = {}, parent = {}, grid_copy = \n{})".format(self.cell, self.children, self.parent, Grid(self.grid_copy))
+        return "Tree(cell = {}, decision = {}, children = {})".format(self.cell, self.decision, self.children)
+
     def fill_children(self):
         print("Filling children for {}".format(self))
         children_with_trees = []
@@ -66,19 +67,73 @@ class Tree(object):
             return [x.find_leaves() for x in self.children]
         
     def max_depth(self):
-        if type(self.children[0]) is not Tree:
+        if len(self.children) == 0:
+            return 0
+        elif type(self.children[0]) is not Tree:
             return 1
         else:
             return 1 + max([child.max_depth() for child in self.children])
+        
+    def find_solutions(self):
+        if len(self.children) == 0:
+            return Grid(self.grid_copy)
+        else:
+            # return sum([child.num_solutions() for child in self.children])
+            return [child.find_solutions() for child in self.children]
+    
+    # def find_solution(self):
+    #     """
+    #     Precondition: there is only one solution
+    #     """
+    #     # TODO: WRONG
+    #     if len(self.children) == 0:
+    #         return self
+    #     else:
+    #         return self.children[0].find_solution()
+
+
+def valid_children(grid, cell):
+    # print("Finding valid children for \n{}".format(grid))
+    # print("for ", cell)
+    children = []
+    for index in grid.viable_indices(cell):
+        grid_copy = Grid(np.copy(grid.grid))
+        entry = index + 1
+        # print("Assigning cell {} value/entry {}".format(cell, entry))
+        grid_copy.assign_cell(cell, entry)
+        grid_copy.double_clear()
+        # print(grid_copy)
+        
+        if not grid_copy.shortcircuited: #and len(grid_copy.undetermined_cells) > 0: 
+        
+            # print("This grid does not shortcircuit and has undetermined cells")
+            # children.append(entry)
+            # children.append((entry, grid_copy))
+            # children.append(( grid_copy.undetermined_cells[0] ))
+            if len(grid.undetermined_cells) > 0:
+                child_cell = grid_copy.undetermined_cells[0]
+                children.append(Tree(cell = child_cell, grid_copy = grid_copy.grid, children = valid_children(Grid(np.copy(grid_copy.grid)), child_cell) , parent = grid, decision = entry ))  
+            else:
+                pass
+                # children.append(entry)
+
+        elif grid_copy.shortcircuited:
+        #     pass
+            print("This grid did shortcircuit, so {} will not be included".format(entry))
+        else:
+            print("This grid had no undetermined cells")
             
+    return children
 
 # This class will keep track of all the known and unknown cells
 class SudokuGrid(Grid):
     def __init__(self, questioner = None, checkpoint_frequency = None, grid = np.ones((9,9,9), dtype='int8')):
-        super(SudokuGrid, self).__init__(grid)
+        self.grid = grid
+        self.num_cells_determined = 0
         self.questioner = questioner
         self.record_checkpoint()
         self.checkpoint_frequency = checkpoint_frequency
+        logging.info("Created SudokuGrid. {} cells determined".format(self.num_cells_determined))
     
     def __eq__(self, other_grid):
         return np.array_equal(self.grid, other_grid)
@@ -131,7 +186,7 @@ class SudokuGrid(Grid):
             return
 
         options = indices_to_options(indices)
-        logging.debug("Determining the value of {} with possibilities {}".format(coordinate, options))
+        logging.info("Determining the value of {} with possibilities {}".format(coordinate, options))
 
         
 
@@ -139,9 +194,13 @@ class SudokuGrid(Grid):
         if len(options) == 2:
             answer = self.questioner.ask_cdq( (coordinate, "==", options[1] ))
             logging.debug(answer)
-            return self.assign_cell(coordinate, options[bool(answer)])
+            entry = self.assign_cell(coordinate, options[bool(answer)])
+            self.double_clear()
+            return entry
         elif len(options) == 1:
-            return self.assign_cell(coordinate, options[0])
+            entry = self.assign_cell(coordinate, options[0])
+            self.double_clear()
+            return entry
 
         # Otherwise, use simple binary search to determine what the value is in a minimal number of questions
         pivot = round(len(indices) / 2)
@@ -150,8 +209,6 @@ class SudokuGrid(Grid):
         logging.debug(answer)
         # determine the cell with the new valid possibilities
         return self.determine_cell(coordinate, indices[pivot:] if answer == True else indices[:pivot])
-        
-
 
     def viable_indices(self, coordinate):
         """
@@ -161,25 +218,6 @@ class SudokuGrid(Grid):
         vi = np.where(self[coordinate] == 1)[0]
         # logging.debug("Viable indices for {}: {}".format(coordinate, vi))
         return vi
-
-    def __repr__(self):
-        def pretty_print_indices(indices):
-            return """{} {} {}\n{} {} {}\n{} {} {}""".format(*[i if i in indices else " " for i in range(1,10)])
-        
-        strings = [[pretty_print_indices( indices_to_options(self.viable_indices((i,j)))).split("\n") for j in range(self.grid.shape[1])] for i in range(9)]
-
-        line_separator = "|" + ("-" * 17 + "||")*2  + "-" * 17 + "|\n"
-        massive_str = line_separator
-
-        for idx, row in enumerate(strings):
-            for i in range(3):
-                grouped_strings = [ x[i] for x in row]
-                grouped_strings.insert(3, "")
-                grouped_strings.insert(7, "")
-                massive_str += "|" + "|".join(grouped_strings) + "|\n"
-            massive_str += 2 * line_separator if idx == 2 or idx == 5 else line_separator
-
-        return massive_str
 
     @property
     def completed(self):
@@ -199,14 +237,6 @@ class SudokuGrid(Grid):
                     return (i,j)
         return False
     
-    @property
-    def undetermined_cells(self):
-        undetermined_cells = []
-        for i in range(9):
-            for j in range(9):
-                if np.count_nonzero(self[i][j]) != 1:
-                    undetermined_cells.append((i,j))
-        return undetermined_cells
 
     @property
     def fully_determined(self):
@@ -216,13 +246,7 @@ class SudokuGrid(Grid):
                     return False
         return True
 
-    @property
-    def shortcircuited(self):
-        for i in range(9):
-            for j in range(9):
-                if np.count_nonzero(self[i][j]) == 0:
-                    return (i, j)
-        return False
+   
     
     def count_solutions(self):
         print("Counting solutions")
@@ -233,45 +257,16 @@ class SudokuGrid(Grid):
             print(cell)
             for value in self.viable_indices(cell):
                 self.assign_cell(cell, value)
-    
- 
+
     @property
     def tree(self):
-        # print(self)
-        # print(self.viable_indices(self.undetermined_cells[0]))
-        logging.debug("Creating a tree, rooted with the first undetermined cell {}".format(self.undetermined_cells[0]))
-        tree = Tree(self.undetermined_cells[0], SudokuGrid(grid=np.copy(self.grid)), self.viable_indices(self.undetermined_cells[0]), None)
-        logging.debug("Filling children")
-        tree.fill_children()
-        print("Just filled the children for the first time. Tree has depth of ", tree.max_depth())
-        
-        def unfinished_leaves():
-            leaves = flatten(tree.find_leaves())
-            print("This is an exhaustive list of leaves", leaves, "with ", len(leaves), " leaves")
-            unfinished_leaves = []
-            for leaf in leaves:
-                print("Checking if leaf {} creates a complete solution".format(leaf))
-                print("You can check if the leaf creates a complete soln for yourself below")
-                print(leaf.grid_copy)
-                
-                if not leaf.grid_copy.completed and not leaf.grid_copy.shortcircuited:
-                    print("This leaf does not create a complete soln")
-                    unfinished_leaves.append(leaf)
-            print("END OF UNFINISHED LEAVES")
-            return unfinished_leaves
-        
-        ul = unfinished_leaves()
+        if len(self.undetermined_cells) == 0:
+            return None
 
-        while len(ul) != 0:
-            print("How deep the tree is", tree.max_depth())
-            print("There are leaves to expand:", ul)
-
-            for child in ul:
-                print("Filling in the children for ", child)
-                child.fill_children()
-
+        grid = np.copy(self.grid)
+        cell = self.undetermined_cells[0]
+        tree = Tree(cell=cell, grid_copy=grid, children=valid_children(Grid(grid), cell), parent=None, decision=None)
         return tree
-        # return tree.fill_children(self)
     
 
     def deepcopy(self):

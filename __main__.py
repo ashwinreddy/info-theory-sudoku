@@ -11,8 +11,6 @@ import toml
 def main():
     with open('config.toml') as f:
         config                    = toml.loads(f.read())
-        logging.basicConfig(level = logging.DEBUG)
-        logging.info(config)
         ask_user_cdqs             = config['questioning']['ask_user_cdqs']
         ask_user_ckpt             = config['questioning']['ask_user_ckpt']
         computer_can_lie          = config['questioning']['computer_can_lie']
@@ -20,6 +18,9 @@ def main():
         checkpoint_frequency      = config['algorithm']['checkpoint_frequency']
         step_mode                 = config['ui']['step_mode']    
         test_grid_fname           = config['algorithm']['test_grid']
+        logging_level             = config['logging']['logging_level']
+        logging.basicConfig(level = {'debug': logging.DEBUG, 'info': logging.INFO}[logging_level])
+        logging.info(config)
 
     test_grid   = np.loadtxt(test_grid_fname, delimiter=' ', dtype='int8')
     questioner  = Questioner(ask_user_cdqs, ask_user_ckpt, computer_can_lie)
