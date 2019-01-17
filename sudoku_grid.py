@@ -2,16 +2,6 @@ import numpy as np
 import logging
 from grid import Grid, indices_to_options
 
-# retrieved from http://code.activestate.com/recipes/578948-flattening-an-arbitrarily-nested-list-in-python/
-def flatten(lis):
-    """Given a list, possibly nested to any level, return it flattened."""
-    new_lis = []
-    for item in lis:
-        new_lis.extend(flatten(item)) if type(item) == type([]) else new_lis.append(item)
-    return new_lis
-
-
-
 class Tree(object):
     def __init__(self, cell, grid_copy, children, parent, decision):
         self.cell      = cell
@@ -21,51 +11,8 @@ class Tree(object):
         self.parent    = parent
     
     def __repr__(self):
-        # return "Tree(cell = {}, children = {}, parent = {}, grid_copy = \n{})".format(self.cell, self.children, self.parent, Grid(self.grid_copy))
         return "Tree(cell = {}, decision = {}, children = {})".format(self.cell, self.decision, self.children)
 
-    def fill_children(self):
-        print("Filling children for {}".format(self))
-        children_with_trees = []
-        if self.parent is not None:
-            sg = self.parent.grid_copy
-        else:
-            sg = self.grid_copy
-        
-        print("Here is the reference grid which all these children I am about to fill will use (initially)", sg)
-        
-        for child in self.children:
-            print("Start of loop. Now considering hypothetically choosing {} for the cell {}".format(child + 1, self.cell))
-            sg_copy = sg.deepcopy()
-            print("Assigning {} {}".format(self.cell, child + 1))
-            sg_copy.assign_cell(self.cell, child + 1)
-            print("Here is this child {} 's unique grid".format(child + 1), sg_copy)
-
-            if not sg_copy.shortcircuited:
-                next_undetermined_cell = sg_copy.undetermined_cells[0]
-                print("Next undetermined cell ", next_undetermined_cell)
-                vi = sg_copy.viable_indices(next_undetermined_cell)
-
-                print(sg_copy)
-                print("Adding a tree for {} with indices {}".format(next_undetermined_cell, vi))
-                new_tree = Tree(next_undetermined_cell, sg_copy, vi, self)
-                print("I am adding a new tree", new_tree)
-                print("This new tree has a grid copy", new_tree.grid_copy)
-                children_with_trees.append(new_tree)
-            else:
-                print("Shortcircuited. Therefore, eliminating option {} for cell {}".format(child+1, self.cell))
-                sg_copy.eliminate_option_for_cell(self.cell, child + 1)
-        
-        self.children = children_with_trees
-        return self
-    
-    def find_leaves(self):
-        # print("Finding leaves for {}".format(self))
-        if len(self.children) == 0 or type(self.children[0]) is not Tree:
-            return [self]
-        else:
-            return [x.find_leaves() for x in self.children]
-        
     def max_depth(self):
         if len(self.children) == 0:
             return 0
@@ -78,18 +25,7 @@ class Tree(object):
         if len(self.children) == 0:
             return Grid(self.grid_copy)
         else:
-            # return sum([child.num_solutions() for child in self.children])
             return [child.find_solutions() for child in self.children]
-    
-    # def find_solution(self):
-    #     """
-    #     Precondition: there is only one solution
-    #     """
-    #     # TODO: WRONG
-    #     if len(self.children) == 0:
-    #         return self
-    #     else:
-    #         return self.children[0].find_solution()
 
 
 def valid_children(grid, cell):
@@ -104,24 +40,18 @@ def valid_children(grid, cell):
         grid_copy.double_clear()
         # print(grid_copy)
         
-        if not grid_copy.shortcircuited: #and len(grid_copy.undetermined_cells) > 0: 
-        
-            # print("This grid does not shortcircuit and has undetermined cells")
-            # children.append(entry)
-            # children.append((entry, grid_copy))
-            # children.append(( grid_copy.undetermined_cells[0] ))
-            if len(grid.undetermined_cells) > 0:
+        if not grid_copy.shortcircuited:
+            if len(grid_copy.undetermined_cells) > 0:
                 child_cell = grid_copy.undetermined_cells[0]
-                children.append(Tree(cell = child_cell, grid_copy = grid_copy.grid, children = valid_children(Grid(np.copy(grid_copy.grid)), child_cell) , parent = grid, decision = entry ))  
+                grandchildren = valid_children(Grid(np.copy(grid_copy.grid)), child_cell)
+                child = Tree(cell = child_cell, grid_copy = grid_copy.grid, children = grandchildren, parent = grid, decision = entry )
             else:
-                pass
-                # children.append(entry)
-
-        elif grid_copy.shortcircuited:
-        #     pass
-            print("This grid did shortcircuit, so {} will not be included".format(entry))
+                child = Tree(cell = None, grid_copy = grid_copy.grid, children = [], parent = grid, decision = entry)
+            children.append(child)
         else:
-            print("This grid had no undetermined cells")
+            pass
+            # print("This grid did shortcircuit, so {} will not be included".format(entry))
+            
             
     return children
 

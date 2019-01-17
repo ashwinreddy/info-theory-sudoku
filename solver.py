@@ -6,7 +6,6 @@ from grid import Grid
 import sys
 # from grid import solve_by_backtracking
 
-
 def solve(sg, cells, assume_lying, checkpoint_frequency, interactive_mode = False):
     logging.debug("Initiating the solver method on the grid")
     i = 0
@@ -20,6 +19,7 @@ def solve(sg, cells, assume_lying, checkpoint_frequency, interactive_mode = Fals
     while not sg.completed:
         print("--------------------------------------------")
         logging.info("Questions asked: {}. Cells Determined: {}. Lie Caught: {}".format(sg.questioner.questions_asked, sg.num_cells_determined, has_lie_been_caught))
+        
         if sg.num_cells_determined % checkpoint_frequency == 0 and sg.num_cells_determined >= checkpoint_frequency and not has_lie_been_caught:
             logging.info("Time for a checkpoint!")
             if sg.shortcircuited:
@@ -32,71 +32,23 @@ def solve(sg, cells, assume_lying, checkpoint_frequency, interactive_mode = Fals
         sg.determine_cell(coordinate, sg.viable_indices(coordinate))
         sg.double_clear()
 
-        if sg.num_cells_determined >= 60:
-            print("More than 60 cells have been determined. Here is the solution tree:")
-            tree  = sg.tree
-            if tree is not None:
-                print(tree)
-                solutions = tree.find_solutions()
-                if type(solutions) is Grid:
-                    print("There is only one solution and it came from a tree")
-                    print(solutions)
-                    sys.exit()
-                
-                if len(solutions) == 1:
-                    print("There is only one solution and it came from a list")
-                    print(solutions[0])
-                    sys.exit()
-                    # len(solutions) == 1:
-                    # print(solutions[0])
-                    # sys.exit()
-        
-        # if sg.num_cells_determined >= 17:
-        #     print("There are more than 17 cells determined. Showing tree")
-            # print(sg.tree)
-        
-        # if sg.num_cells_determined >= 40:
-        #     tree = sg.tree
+        # if sg.num_cells_determined >= 55:
+        #     print("More than 60 cells have been determined. Here is the solution tree:")
+        #     tree  = sg.tree
         #     if tree is not None:
-        #         print("Num solutions", tree.num_solutions())
-        #         if tree.num_solutions() == 1:
-        #             soln = tree.find_solution()
-        #             print(soln)
-        #             print(Grid(soln.grid_copy))
+        #         solutions = tree.find_solutions()
+        #         print(solutions)
+        #         if type(solutions) is Grid:
+        #             print("There is only one solution and it came from a tree")
+        #             print(solutions)
         #             sys.exit()
-        #     print(sg.num_cells_determined)
-        #     print(sg)
-            # sys.exit()
-            # sg.count_solutions()
-            # grid_copy1 = np.copy(sg.collapsed_grid)
-            # grid_copy2 = np.copy(sg.collapsed_grid)
-            # sol_grid_1 = solve_by_backtracking(grid_copy1, mode = "lower")
-            # sol_grid_2 = solve_by_backtracking(grid_copy2, mode = "upper")
-            # lower = int("".join([str(x) for x in grid_copy1.flatten()]))
-            # upper = int("".join([str(x) for x in grid_copy2.flatten()]))
-            
-            # print("Lower", lower, "\nUpper", upper)
-            # # print(grid_copy1, sg.questioner.grid)
-            # if np.array_equal(grid_copy1, sg.questioner.grid):
-            #     solution = grid_copy1
-            #     print("Found it with grid 1!", sg.questioner.questions_asked)
                 
-            # if np.array_equal(grid_copy2, sg.questioner.grid):
-            #     solution = grid_copy2
-            #     print("Found it with grid 2!", sg.questioner.questions_asked)
-                
-            #     # print("----------------------")
-            #     # print(grid_copy1, grid_copy2)
-            # if np.array_equal(grid_copy1, grid_copy2):
-            #     grid_copies_1.append(lower)
-            #     grid_copies_2.append(upper)
-            #     if len(grid_copies_1) >= 2:
-            #         print("Difference between this lower grid and last lower grid", grid_copies_1[-1] - grid_copies_1[-2])
-            #         print("difference between this upper grid and last upper grid", grid_copies_2[-1] - grid_copies_2[-2])
-            #     solution = grid_copy1
-            #     print("Convergent backtracking completed", sg.questioner.questions_asked)
-                
-
+        #         if len(solutions) == 1:
+        #             print("There is only one solution and it came from a list")
+        #             print(solutions[0])
+        #             sys.exit()
+        #     else:
+        #         print("Tree is none")
         
         i += 1
         if interactive_mode:

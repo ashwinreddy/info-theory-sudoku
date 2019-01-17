@@ -4,12 +4,12 @@ step_mode = false
 [questioning]
 ask_user_cdqs = false
 ask_user_ckpt = false
-computer_can_lie = false
+computer_can_lie = true
 
 [algorithm]
-assume_lying = false
+assume_lying = true
 checkpoint_frequency = 4
-test_grid = "test_grids/2.txt"
+test_grid = "test_grids/1.txt"
 
 [logging]
 logging_level = "debug"

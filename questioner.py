@@ -20,7 +20,7 @@ class Questioner(object):
         self.questions_asked           = 0
         self.can_lie                   = can_lie
         self.has_lied_yet              = False
-        self.question_number_to_lie_on = 1 # random.randint(1,72)
+        self.question_number_to_lie_on = random.randint(1,72)
         
     def set_grid(self, grid):
         self.grid = grid
