@@ -1,3 +1,10 @@
+"""
+Developed by Ashwin Rammohan & Ashwin Reddy
+
+Implements the Grid class, which wraps around a 9x9x9 array representing a Sudoku grid
+"""
+
+
 import numpy as np
 import logging
 

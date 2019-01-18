@@ -5,6 +5,7 @@ step_mode = false
 ask_user_cdqs = false
 ask_user_ckpt = false
 computer_can_lie = true
+checkpointing_method = "repeat" # dyl for did you lie vs. repeat
 
 [algorithm]
 assume_lying = true
