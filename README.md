@@ -1,2 +1,3 @@
 # Info Theory Sudoku Project
 
+The core of this program lives in the `solver.py` file, the `questioner.py`, and the `grid.py` file. The `grid.py` has a class that wraps around a 9x9x9 array representing possible values for a grid. The Sudoku Grid extends this class to provide some other abilities. In the `solver.py` file, the program determines each cell one at a time (and checkpoints at the right time). The `questioner.py` file routes questions to the user or plays itself accordingly. 

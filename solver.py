@@ -40,6 +40,7 @@ def solve(sg, cells, assume_lying, checkpoint_frequency, checkpointing_method, i
 def checkpoint(sg, checkpointing_method):
     rewinding_required = sg.questioner.ask_if_rewinding_required(sg.collapsed_grid)
     logging.info("Grid wrong according to Anu: {}".format(rewinding_required))
+    should_record_checkpoint = True
     if rewinding_required:
         
         if checkpointing_method == "dyl":

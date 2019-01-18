@@ -13,7 +13,7 @@ operator_to_human_readable = {
 }
 
 def ask_human_question(prompt):
-    return input(prompt + " (y/n)") == "yes"
+    return input(prompt + "(y/n) ").startswith("y")
 
 class Questioner(object):
     """
@@ -35,12 +35,12 @@ class Questioner(object):
         """
         Routes a cell determining question appropriately
         """
-
-        human_readable_question = "Is the value in {}th cell {} {} ? ".format([x + 1 for x in question[0]], operator_to_human_readable[question[1]], question[2])
+        cell = [x + 1 for x in question[0]]
+        human_readable_question = "Is the value in the cell in the {}th row and {}th column {} {} ? ".format(cell[0], cell[1], operator_to_human_readable[question[1]], question[2])
         logging.debug(human_readable_question)
         self.questions_asked += 1
         
-        answer, is_this_correct_answer = ask_human_question(human_readable_question) if self.ask_user_cdqs else self._answer_question_as_computer(self._ask_computer_cdq(question), "cdq")
+        answer, is_this_correct_answer = (ask_human_question(human_readable_question), True) if self.ask_user_cdqs else self._answer_question_as_computer(self._ask_computer_cdq(question), "cdq")
 
         if is_this_correct_answer == False:
             self.has_lied_yet = "cdq"
